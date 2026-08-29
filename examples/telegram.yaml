@@ -1,0 +1,20 @@
+# Store this as $XDG_CONFIG_HOME/brandi/telegram.yaml and set tokens in the
+# environment. In hub mode only the first project's token is used; route with
+# `/project <id> <command>` or by each project's configured chat.
+mode: hub
+public_mode: false
+allowed_users: [123456789]
+projects:
+  - id: brandi
+    path: /home/sal/brandi
+    token_env: BRANDI_TELEGRAM_TOKEN
+    chat_id: -1001234567890
+    roles:
+      viewers: [123456789]
+      planners: [123456789]
+      approvers: [123456789]
+      publishers: [123456789]
+      administrators: []
+
+# Fleet mode runs one long-poll worker per entry inside the same supervisor.
+# Give each project a distinct token_env when mode is `fleet`.

@@ -1,0 +1,10 @@
+# Copy to .brandi/authorization.yaml and replace the example UID with the
+# operating-system UID returned by `id -u`. Missing principals and roles deny.
+principals:
+  - uid: 1000
+    roles:
+      - viewer
+      - planner
+      - approver
+      - publisher
+      - device-operator

@@ -1,0 +1,9 @@
+segments:
+  - name: platform_engineers
+    description: "Teams responsible for engineering governance"
+    pains: ["identity drift", "inconsistent UX copy"]
+narratives:
+  - capability: "brand linting"
+    narrative: "prevent identity drift before it ships"
+    audiences: [platform_engineers]
+    formats: [x_post, blog, demo_video, docs]

@@ -1,0 +1,42 @@
+name: Supply chain
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-and-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: tui/go.mod
+          cache-dependency-path: tui/go.sum
+      - name: Install pinned supply-chain tools
+        run: |
+          cargo install cargo-deny --version 0.20.2 --locked
+          cargo install cargo-cyclonedx --version 0.5.9 --locked
+          go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@v1.12.0
+          go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
+      - name: Enforce locked dependency policy
+        run: |
+          cargo check --locked
+          cargo deny check advisories bans sources licenses
+          cd tui
+          go mod verify
+          govulncheck ./...
+      - name: Generate release inventories
+        run: scripts/generate-supply-chain.sh supply-chain
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brandi-supply-chain
+          path: supply-chain/
+          if-no-files-found: error

@@ -1,0 +1,10 @@
+product:
+  name: Brandi
+  tagline: "Brand coherence intelligence"
+  mission: "Keep every outward expression of a product aligned with its identity."
+  aliases: []
+  former_names: []
+archetype: [explorer, engineer, challenger]
+terminology:
+  canonical: {}
+  banned_variants: {}

@@ -1,0 +1,3 @@
+# Local external actions fail closed until an operator explicitly assigns
+# this machine's OS UID the minimum required roles. See examples/authorization.yaml.
+principals: []

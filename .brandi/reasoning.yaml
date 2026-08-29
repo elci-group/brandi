@@ -1,0 +1,7 @@
+# OpenAI-compatible Responses API used only for structured VHS planning.
+# Keep the secret in the named environment variable; never put it in this file.
+provider: openai
+base_url: https://api.openai.com/v1
+model: gpt-5-mini
+api_key_env: OPENAI_API_KEY
+reasoning_effort: medium

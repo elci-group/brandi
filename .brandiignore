@@ -1,0 +1,11 @@
+# Paths brandi should not lint about itself: files that intentionally
+# quote prohibited-list example words as data, not as brand prose.
+#
+# src/genome.rs embeds the default prohibited.yaml template verbatim
+# (including "awesome", "amazing", "game changer", ...) as documentation
+# examples of what the rule catches, not as brand-facing copy.
+src/genome.rs
+
+# tui/brandi_test.go uses "amazing" as a literal fixture to unit-test the
+# prohibited-term rule; it is not user-facing prose either.
+tui/brandi_test.go

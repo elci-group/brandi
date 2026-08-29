@@ -1,0 +1,172 @@
+./src/assets.rs:42:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Genome("no images given".to_string()));
+  = help: Emit a structured event before returning or handling an error.
+./src/assets.rs:175:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::NotFound(path.display().to_string()));
+  = help: Emit a structured event before returning or handling an error.
+./src/assets.rs:593:17: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(_) => issues.push(("undecodable image data".to_string(), 5)),
+  = help: Emit a structured event before returning or handling an error.
+./src/assets.rs:735:5: error [TRC002] result is discarded without a diagnostic record
+  | for entry in entries.filter_map(|e| e.ok()) {
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:62:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(_) => false,
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:91:5: error [TRC002] result is discarded without a diagnostic record
+  | std::fs::read_to_string(path).ok()?.trim().parse().ok()
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:130:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(e) => {
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:131:13: error [TRC002] result is discarded without a diagnostic record
+  | let _ = std::fs::remove_file(pidfile_path(project_root));
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:132:13: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Daemon(format!("failed to create file watcher: {e}")));
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:135:5: error [TRC001] failure path has no nearby structured diagnostic event
+  | if let Err(e) = watcher.watch(project_root, RecursiveMode::Recursive) {
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:136:9: error [TRC002] result is discarded without a diagnostic record
+  | let _ = std::fs::remove_file(pidfile_path(project_root));
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:137:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Daemon(format!(
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:147:13: error [TRC002] result is discarded without a diagnostic record
+  | let _ = std::fs::remove_file(pidfile_path(project_root));
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:159:13: error [TRC001] failure path has no nearby structured diagnostic event
+  | Ok(Err(_)) => last_event = Some(Instant::now()),
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:160:13: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(RecvTimeoutError::Timeout) => {}
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:161:13: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(RecvTimeoutError::Disconnected) => {
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:162:17: error [TRC002] result is discarded without a diagnostic record
+  | let _ = std::fs::remove_file(pidfile_path(project_root));
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:163:17: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Daemon("watcher channel disconnected".to_string()));
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:174:17: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(_) => last_event = Some(Instant::now()),
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:186:17: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(e) => {
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:187:21: error [TRC002] result is discarded without a diagnostic record
+  | let _ = log_line(project_root, &format!("re-lint failed: {e}"));
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:198:13: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Daemon(format!("already running (pid {pid})")));
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:202:13: error [TRC002] result is discarded without a diagnostic record
+  | let _ = std::fs::remove_file(pidfile_path(project_root));
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:241:5: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(BrandiError::Daemon(format!(
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:251:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::NotFound("daemon not running".to_string()));
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:255:9: error [TRC002] result is discarded without a diagnostic record
+  | let _ = std::fs::remove_file(&pidfile);
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:256:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Daemon("stale pidfile removed".to_string()));
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:259:9: error [TRC002] result is discarded without a diagnostic record
+  | let _ = std::fs::remove_file(&pidfile);
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:260:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Daemon("stale pidfile removed".to_string()));
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:266:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Daemon(format!("failed to signal pid {pid}")));
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:276:5: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(BrandiError::Daemon("failed to stop".to_string()))
+  = help: Emit a structured event before returning or handling an error.
+./src/daemon.rs:284:13: error [TRC002] result is discarded without a diagnostic record
+  | let _ = std::fs::remove_file(pidfile_path(project_root));
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:292:9: error [TRC002] result is discarded without a diagnostic record
+  | .ok()
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:293:9: error [TRC002] result is discarded without a diagnostic record
+  | .and_then(|content| serde_json::from_str::<serde_json::Value>(&content).ok());
+  = help: Handle the result or record why discarding it is safe.
+./src/daemon.rs:407:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(_) => false,
+  = help: Emit a structured event before returning or handling an error.
+./src/genome.rs:293:5: error [TRC002] result is discarded without a diagnostic record
+  | let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+  = help: Handle the result or record why discarding it is safe.
+./src/genome.rs:294:5: error [TRC002] result is discarded without a diagnostic record
+  | let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+  = help: Handle the result or record why discarding it is safe.
+./src/genome.rs:295:5: error [TRC002] result is discarded without a diagnostic record
+  | let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+  = help: Handle the result or record why discarding it is safe.
+./src/genome.rs:353:13: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Genome(problems.join("; ")));
+  = help: Emit a structured event before returning or handling an error.
+./src/genome.rs:385:13: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::Genome(problems.join("; ")));
+  = help: Emit a structured event before returning or handling an error.
+./src/genome.rs:451:9: warning [TRC006] error mapping discards the source error
+  | .map_err(|_| BrandiError::Genome(format!("missing genome file: {}", path.display())))?;
+  = help: Preserve the source error when mapping it.
+./src/genome.rs:460:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(T::default()),
+  = help: Emit a structured event before returning or handling an error.
+./src/genome.rs:461:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(_) => Err(BrandiError::Genome(format!("missing genome file: {}", path.display()))),
+  = help: Emit a structured event before returning or handling an error.
+./src/genome.rs:470:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(_) => {
+  = help: Emit a structured event before returning or handling an error.
+./src/genome.rs:477:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(e) => {
+  = help: Emit a structured event before returning or handling an error.
+./src/rules.rs:160:5: error [TRC002] result is discarded without a diagnostic record
+  | Regex::new(&format!(r"(?i)\b{}\b", regex::escape(phrase))).ok()
+  = help: Handle the result or record why discarding it is safe.
+./src/rules.rs:169:5: error [TRC002] result is discarded without a diagnostic record
+  | Regex::new(&format!(r"\b(?:{})\b", alts.join("|"))).ok()
+  = help: Handle the result or record why discarding it is safe.
+./src/rules.rs:332:9: error [TRC002] result is discarded without a diagnostic record
+  | Regex::new(r"^(?i)error\s+\d+").ok()
+  = help: Handle the result or record why discarding it is safe.
+./src/rules.rs:377:5: error [TRC002] result is discarded without a diagnostic record
+  | let error_re = Regex::new(r"(?i)\b(?:error|failed|invalid|expired|missing|denied)\b").ok();
+  = help: Handle the result or record why discarding it is safe.
+./src/rules.rs:379:9: error [TRC002] result is discarded without a diagnostic record
+  | Regex::new(r"(?i)\b(?:run|try|check|reconnect|see|update|install|set|use|add|fix|restart|retry|contact)\b").ok();
+  = help: Handle the result or record why discarding it is safe.
+./src/surface.rs:46:5: critical [TRC007] panic path cannot be reconstructed from telemetry
+  | RE.get_or_init(|| Regex::new(r#""([^"\\\n]{4,})""#).expect("static UI-string regex must compile"))
+  = help: Replace unwrap/expect with a traced, contextual error path.
+./src/surface.rs:53:5: critical [TRC007] panic path cannot be reconstructed from telemetry
+  | RE.get_or_init(|| Regex::new(r"^[a-z0-9_\-./:{}%]+$").expect("static identifier regex must compile"))
+  = help: Replace unwrap/expect with a traced, contextual error path.
+./src/surface.rs:59:5: critical [TRC007] panic path cannot be reconstructed from telemetry
+  | RE.get_or_init(|| Regex::new(r"#[0-9a-fA-F]{6}\b").expect("static hex-color regex must compile"))
+  = help: Replace unwrap/expect with a traced, contextual error path.
+./src/surface.rs:125:9: error [TRC002] result is discarded without a diagnostic record
+  | .filter_map(|entry| entry.ok())
+  = help: Handle the result or record why discarding it is safe.
+./src/surface.rs:160:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+  = help: Emit a structured event before returning or handling an error.
+./src/surface.rs:161:13: error [TRC001] failure path has no nearby structured diagnostic event
+  | return Err(BrandiError::NotFound(format!("{}", full_path.display())));
+  = help: Emit a structured event before returning or handling an error.
+./src/surface.rs:163:9: error [TRC001] failure path has no nearby structured diagnostic event
+  | Err(_) => return Ok(Vec::new()),
+  = help: Emit a structured event before returning or handling an error.
+Traci: 13 file(s), 57 finding(s) (0 info, 1 warning, 53 error, 3 critical)

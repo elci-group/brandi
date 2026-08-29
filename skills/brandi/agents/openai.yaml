@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brandi"
+  short_description: "Audit and protect product brand coherence"
+  default_prompt: "Use $brandi to inspect this project for identity drift and recommend the safest next action."

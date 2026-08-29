@@ -1,0 +1,122 @@
+[[file]]
+path = "src/tape.rs"
+required = true
+forbid_regex = ["TODO", "FIXME", "unimplemented!()"]
+
+[[file]]
+path = "src/automation.rs"
+required = true
+forbid_regex = ["TODO", "FIXME", "unimplemented!()"]
+
+[[file]]
+path = "src/adb_social.rs"
+required = true
+require_regex = ["exact confirmation", "uiautomator", "android.intent.action.SEND", "pair_wifi", "bridge_usb_to_wifi", "disconnect_wifi"]
+forbid_regex = ["TODO", "FIXME", "unimplemented!()"]
+
+[[file]]
+path = "src/process.rs"
+required = true
+require_regex = ["run_bounded", "timed_out", "truncated"]
+forbid_regex = ["TODO", "FIXME", "unimplemented!()"]
+
+[[file]]
+path = "docs/SECURITY_CONTROLS.md"
+required = true
+require_regex = ["Identity and authorization", "Generated execution", "Declared resource budgets"]
+
+[[file]]
+path = "docs/PHASE1_COMPLETION.md"
+required = true
+require_regex = ["Phase 1 of the enterprise roadmap was completed", "Exit-gate evidence", "Verification snapshot"]
+
+[[file]]
+path = "docs/PHASE2_COMPLETION.md"
+required = true
+require_regex = ["Phase 2 of the enterprise roadmap was completed", "precision", "recall", "scoring-v2"]
+
+[[file]]
+path = "docs/SCANNER_AND_SCORING.md"
+required = true
+require_regex = ["Extraction schema", "Scan completeness", "Scoring model", "Baseline mode"]
+
+[[file]]
+path = "evaluation/v1/corpus.json"
+required = true
+require_regex = ["brandi-evaluation-corpus", "expected_surfaces", "expected_non_surfaces"]
+
+[[file]]
+path = ".github/workflows/quality.yml"
+required = true
+require_regex = ["brandi evaluate", "fail-under-precision", "fail-under-recall", "fail-under 80"]
+
+[[file]]
+path = ".github/workflows/supply-chain.yml"
+required = true
+require_regex = ["cargo deny", "govulncheck", "generate-supply-chain.sh"]
+
+[[file]]
+path = "tui/model.go"
+required = true
+require_regex = ["Tape Studio", "Growth", "wifiWizard", "wifiPairCmd"]
+
+[[file]]
+path = "tui/brandi.go"
+required = true
+require_regex = ["DiscoverProjects", "StarRating"]
+
+[[file]]
+path = "tui/main.go"
+required = true
+require_regex = ["BRANDI_WORKSPACE_ROOT", "--workspace|portfolio root"]
+
+[[command]]
+name = "Rust tests"
+cmd = ["cargo", "test"]
+expect_exit = 0
+timeout_secs = 300
+stdout_contains = ["test result: ok"]
+
+[[command]]
+name = "Rust formatting"
+cmd = ["cargo", "fmt", "--all", "--", "--check"]
+expect_exit = 0
+timeout_secs = 120
+
+[[command]]
+name = "Rust Clippy"
+cmd = ["cargo", "clippy", "--all-targets", "--all-features", "--", "-D", "warnings"]
+expect_exit = 0
+timeout_secs = 300
+
+[[command]]
+name = "Go tests"
+cmd = ["go", "test", "./..."]
+cwd = "tui"
+expect_exit = 0
+timeout_secs = 180
+
+[[command]]
+name = "Go vet"
+cmd = ["go", "vet", "./..."]
+cwd = "tui"
+expect_exit = 0
+timeout_secs = 180
+
+[[command]]
+name = "Evaluation corpus"
+cmd = ["cargo", "run", "--quiet", "--", "evaluate", "--corpus", "evaluation/v1/corpus.json", "--fail-under-precision", "0.95", "--fail-under-recall", "0.90"]
+expect_exit = 0
+timeout_secs = 300
+stdout_contains = ["precision", "recall", "PASS"]
+
+[[command]]
+name = "Brandi self-lint"
+cmd = ["cargo", "run", "--quiet", "--", "lint", "--path", ".", "--fail-under", "80"]
+expect_exit = 0
+timeout_secs = 300
+stdout_contains = ["scoring-v2", "Scan status: complete"]
+
+[git]
+no_uncommitted_changes = false
+no_untracked_files = false

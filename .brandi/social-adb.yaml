@@ -1,0 +1,3 @@
+# Device/app publishing is disabled until an operator adds allowlisted targets.
+default_device: ""
+targets: []

@@ -1,0 +1,9 @@
+categories:
+  corporate_jargon: ["synergy", "best-in-class", "seamless", "seamlessly", "cutting-edge", "world-class", "leverage our"]
+  empty_hype: ["revolutionary", "game-changing", "game changer", "the future of", "awesome", "amazing", "incredible"]
+  generic_ai_language: ["delve", "delving", "unlock the power", "supercharge", "elevate", "harness the", "in today's fast-paced"]
+severity:
+  corporate_jargon: warning
+  empty_hype: error
+  generic_ai_language: warning
+visual_motifs: ["gradients", "photorealistic people", "stock photography", "drop shadows", "skeuomorphism"]

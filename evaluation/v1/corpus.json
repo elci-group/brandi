@@ -1,0 +1,197 @@
+{
+  "schema": "brandi-evaluation-corpus",
+  "version": "1",
+  "cases": [
+    {
+      "id": "rust-cli",
+      "profile": "small-rust",
+      "path": "src/main.rs",
+      "content": "fn main() { println!(\"Welcome to Brandi\"); let api_key = \"machine_secret\"; }",
+      "expected_surfaces": ["Welcome to Brandi"],
+      "expected_non_surfaces": ["machine_secret"],
+      "expected_findings": []
+    },
+    {
+      "id": "rust-error",
+      "profile": "small-rust",
+      "path": "src/error.rs",
+      "content": "fn fail() { eprintln!(\"Run brandi init to continue\"); }",
+      "expected_surfaces": ["Run brandi init to continue"],
+      "expected_non_surfaces": [],
+      "expected_findings": []
+    },
+    {
+      "id": "rust-clap",
+      "profile": "cli-frameworks",
+      "path": "src/cli.rs",
+      "content": "#[command(about = \"Inspect brand consistency\")] struct Cli;",
+      "expected_surfaces": ["Inspect brand consistency"],
+      "expected_non_surfaces": [],
+      "expected_findings": []
+    },
+    {
+      "id": "rust-ui-field",
+      "profile": "design-system",
+      "path": "src/view.rs",
+      "content": "fn card() { let title = \"Brand health\"; let cache_key = \"brand_health_v1\"; }",
+      "expected_surfaces": ["Brand health"],
+      "expected_non_surfaces": ["brand_health_v1"],
+      "expected_findings": []
+    },
+    {
+      "id": "go-cli",
+      "profile": "medium-go",
+      "path": "cmd/main.go",
+      "content": "package main\nimport \"fmt\"\nfunc main(){ fmt.Println(\"Scan completed successfully\") }",
+      "expected_surfaces": ["Scan completed successfully"],
+      "expected_non_surfaces": ["fmt"],
+      "expected_findings": []
+    },
+    {
+      "id": "go-log",
+      "profile": "medium-go",
+      "path": "internal/run.go",
+      "content": "package run\nimport \"log\"\nfunc run(){ log.Printf(\"Retry the operation after signing in\") }",
+      "expected_surfaces": ["Retry the operation after signing in"],
+      "expected_non_surfaces": ["log"],
+      "expected_findings": []
+    },
+    {
+      "id": "go-ui-field",
+      "profile": "design-system",
+      "path": "ui/card.go",
+      "content": "package ui\nfunc card(){ label := \"Brand status\"; route := \"/status\"; _, _ = label, route }",
+      "expected_surfaces": ["Brand status"],
+      "expected_non_surfaces": ["/status"],
+      "expected_findings": []
+    },
+    {
+      "id": "go-machine-call",
+      "profile": "monorepo",
+      "path": "internal/http/client.go",
+      "content": "package httpx\nfunc run(){ http.NewRequest(\"GET\", \"https://example.invalid\", nil) }",
+      "expected_surfaces": [],
+      "expected_non_surfaces": ["GET", "https://example.invalid"],
+      "expected_findings": []
+    },
+    {
+      "id": "javascript-alert",
+      "profile": "medium-web",
+      "path": "web/app.js",
+      "content": "function save() { alert(\"Your changes were saved\"); fetch(\"/api/save\"); }",
+      "expected_surfaces": ["Your changes were saved"],
+      "expected_non_surfaces": ["/api/save"],
+      "expected_findings": []
+    },
+    {
+      "id": "javascript-log",
+      "profile": "medium-web",
+      "path": "web/errors.js",
+      "content": "console.error(\"Sign in again to continue\"); const code = \"AUTH_2\";",
+      "expected_surfaces": ["Sign in again to continue"],
+      "expected_non_surfaces": ["AUTH_2"],
+      "expected_findings": []
+    },
+    {
+      "id": "jsx-template",
+      "profile": "design-system",
+      "path": "web/Card.jsx",
+      "content": "export const Card = () => <section><h1>Brand overview</h1><button>Review findings</button></section>;",
+      "expected_surfaces": ["Brand overview", "Review findings"],
+      "expected_non_surfaces": [],
+      "expected_findings": []
+    },
+    {
+      "id": "typescript-localization",
+      "profile": "multilingual",
+      "path": "web/i18n.ts",
+      "content": "export const heading = translate(\"Revisar la identidad\");",
+      "expected_surfaces": ["Revisar la identidad"],
+      "expected_non_surfaces": [],
+      "expected_findings": []
+    },
+    {
+      "id": "tsx-template",
+      "profile": "design-system",
+      "path": "web/Status.tsx",
+      "content": "export function Status(){ return <p>Identity checks passed</p>; }",
+      "expected_surfaces": ["Identity checks passed"],
+      "expected_non_surfaces": [],
+      "expected_findings": []
+    },
+    {
+      "id": "python-cli",
+      "profile": "small-python",
+      "path": "tools/check.py",
+      "content": "def main():\n    print(\"Review the findings below\")\n    key = \"cache_key\"\n",
+      "expected_surfaces": ["Review the findings below"],
+      "expected_non_surfaces": ["cache_key"],
+      "expected_findings": []
+    },
+    {
+      "id": "python-log",
+      "profile": "small-python",
+      "path": "tools/run.py",
+      "content": "import logging\nlogging.error(\"Update the configuration and retry\")\n",
+      "expected_surfaces": ["Update the configuration and retry"],
+      "expected_non_surfaces": [],
+      "expected_findings": []
+    },
+    {
+      "id": "python-error",
+      "profile": "small-python",
+      "path": "tools/config.py",
+      "content": "def load():\n    raise ValueError(\"Choose a supported output format\")\n",
+      "expected_surfaces": ["Choose a supported output format"],
+      "expected_non_surfaces": [],
+      "expected_findings": []
+    },
+    {
+      "id": "documentation-fences",
+      "profile": "documentation-heavy",
+      "path": "docs/guide.md",
+      "content": "# Configure Brandi\n\nReview every outward-facing surface.\n\n```rust\nprintln!(\"fixture text is not prose\");\n```\n",
+      "expected_surfaces": ["# Configure Brandi", "Review every outward-facing surface."],
+      "expected_non_surfaces": ["println!(\"fixture text is not prose\");"],
+      "expected_findings": []
+    },
+    {
+      "id": "multilingual-docs",
+      "profile": "multilingual",
+      "path": "docs/es.md",
+      "content": "# Estado de marca\n\nVerifica cada mensaje antes de publicar.\n",
+      "expected_surfaces": ["# Estado de marca", "Verifica cada mensaje antes de publicar."],
+      "expected_non_surfaces": [],
+      "expected_findings": []
+    },
+    {
+      "id": "generated-source",
+      "profile": "generated-code",
+      "path": "src/client.generated.ts",
+      "content": "console.error(\"Generated client failed\");",
+      "expected_surfaces": [],
+      "expected_non_surfaces": ["Generated client failed"],
+      "expected_findings": []
+    },
+    {
+      "id": "test-fixture",
+      "profile": "monorepo",
+      "path": "tests/fixture.rs",
+      "content": "fn fixture(){ println!(\"Amazing fixture output\"); }",
+      "expected_surfaces": [],
+      "expected_non_surfaces": ["Amazing fixture output"],
+      "expected_findings": [
+        {"rule_id": "prohibited-term", "severity": "error"}
+      ]
+    },
+    {
+      "id": "style-palette",
+      "profile": "design-system",
+      "path": "web/theme.css",
+      "content": ":root { --brand-primary: #FF2DAA; }",
+      "expected_surfaces": ["#FF2DAA"],
+      "expected_non_surfaces": [],
+      "expected_findings": []
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+# vamos manifest: one [[actions]] block per software affordance.
+#
+# `{{param}}` placeholders in `completion` atoms are filled in from
+# `--param key=value` given to `vamos trigger`. Atoms vamos can check
+# itself (files, commands) run for real; `fact_true` atoms record an
+# external signal you assert yourself via `vamos fact`.
+
+[[actions]]
+name = "create_file"
+trigger = "New File"
+expected_effects = [
+  "new file object appears",
+  "file receives an identity/path",
+  "editor enters editable state",
+]
+
+[[actions.continuation]]
+name = "populate"
+description = "define filename and populate content"
+
+[[actions.continuation]]
+name = "save"
+description = "persist to disk"
+
+[[actions.completion]]
+type = "file_exists"
+path = "{{path}}"
+
+[[actions.completion]]
+type = "file_nonempty"
+path = "{{path}}"
+
+[[actions]]
+name = "delete"
+trigger = "Delete"
+
+[[actions.continuation]]
+name = "select_confirm"
+description = "select target and confirm"
+
+[[actions.completion]]
+type = "file_absent"
+path = "{{path}}"
+
+[[actions]]
+name = "rename"
+trigger = "Rename"
+
+[[actions.continuation]]
+name = "enter_name"
+description = "enter new name"
+
+[[actions.continuation]]
+name = "confirm"
+description = "confirm rename"
+
+[[actions.completion]]
+type = "file_exists"
+path = "{{new_path}}"
+
+[[actions.completion]]
+type = "file_absent"
+path = "{{old_path}}"
+
+[[actions]]
+name = "install"
+trigger = "install command"
+
+[[actions.continuation]]
+name = "dependency_resolution"
+description = "resolve dependencies"
+
+[[actions.continuation]]
+name = "package_commit"
+description = "commit package to disk"
+
+[[actions.completion]]
+type = "command_succeeds"
+cmd = "command -v {{binary}}"
+
+[[actions]]
+name = "deploy"
+trigger = "deploy command"
+
+[[actions.continuation]]
+name = "build"
+description = "build artifact"
+
+[[actions.continuation]]
+name = "upload"
+description = "upload artifact"
+
+[[actions.continuation]]
+name = "release"
+description = "activate release"
+
+[[actions.completion]]
+type = "fact_true"
+name = "endpoint_serves_new_version"
+
+[[actions]]
+name = "configure"
+trigger = "open setting"
+
+[[actions.continuation]]
+name = "modify_value"
+description = "modify the setting value"
+
+[[actions.continuation]]
+name = "save_apply"
+description = "save/apply"
+
+[[actions.completion]]
+type = "fact_true"
+name = "runtime_reflects_value"
+
+[[actions]]
+name = "create_account"
+trigger = "submit"
+
+[[actions.continuation]]
+name = "verification"
+description = "verify contact details"
+
+[[actions.continuation]]
+name = "profile"
+description = "complete profile"
+
+[[actions.continuation]]
+name = "account_creation"
+description = "commit account record"
+
+[[actions.completion]]
+type = "fact_true"
+name = "authenticated_identity_works"

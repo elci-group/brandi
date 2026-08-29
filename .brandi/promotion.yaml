@@ -1,0 +1,9 @@
+project_id: brandi
+github_repository: ""
+github_subpath: ""
+padagonia_url: ""
+padagonia_key_env: PADAGONIA_API_KEY
+horizon_days: 30
+milestone_threshold: 40
+telegram_channel_id: 0
+telegram_token_env: TELEGRAM_BOT_TOKEN

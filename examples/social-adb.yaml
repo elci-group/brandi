@@ -1,0 +1,18 @@
+# Copy to .brandi/social-adb.yaml and verify selectors against the installed
+# app version with `adb shell uiautomator dump` before publishing.
+default_device: ""
+targets:
+  - id: x
+    package: com.twitter.android
+    mime_type: text/plain
+    settle_ms: 1800
+    publish_selector:
+      kind: resource_id
+      value: com.twitter.android:id/button_tweet
+  - id: linkedin
+    package: com.linkedin.android
+    mime_type: text/plain
+    settle_ms: 1800
+    publish_selector:
+      kind: text
+      value: Post
