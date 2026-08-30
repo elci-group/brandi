@@ -707,7 +707,8 @@ fn visual_requirement(
             },
             "forbidden_motifs": guidelines.prohibited.visual_motifs
         },
-        "required_variants": ["master"]
+        "required_variants": ["master"],
+        "target_context": crate::direct::target_context(&brief.audience)
     })
 }
 

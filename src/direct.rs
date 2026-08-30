@@ -6,7 +6,7 @@
 //! selected asset can be promoted into the project.
 
 use crate::assets;
-use crate::brief::Brief;
+use crate::brief::{Audience, Brief};
 use crate::error::{BrandiError, Result};
 use crate::guidelines::{parse_hex_color, Guidelines, VisualLanguage};
 use crate::process::{run_bounded, run_bounded_with_input, MAX_SUBPROCESS_OUTPUT_BYTES};
@@ -177,6 +177,10 @@ pub struct DirectPlan {
     pub visual_language: VisualLanguage,
     /// Forbidden visual motifs from `.brandi/prohibited.yaml`.
     pub forbidden_motifs: Vec<String>,
+    /// Who this asset is for and why, from `.brandi/audience.yaml` — handed
+    /// to generation providers such as VASILIS as `target_context` instead
+    /// of leaving audience data unused past demo-format decisions.
+    pub audience: Audience,
     pub objectives: Vec<ObjectiveConfig>,
     pub actions: Vec<GenerationAction>,
     pub reviewer: ReviewerRoute,
@@ -447,6 +451,7 @@ pub fn plan(root: &Path, options: &DirectOptions) -> Result<(DirectConfig, Direc
         palette,
         visual_language: guidelines.visual.visual_language.clone(),
         forbidden_motifs: guidelines.prohibited.visual_motifs.clone(),
+        audience: brief.audience.clone(),
         objectives: config.objectives.clone(),
         actions,
         reviewer,
@@ -1089,7 +1094,33 @@ fn vasilis_requirement(
             },
             "forbidden_motifs": plan.forbidden_motifs
         },
-        "required_variants":["master"], "evidence":{"brief_section":plan.section,"sources":plan.sources}
+        "required_variants":["master"], "evidence":{"brief_section":plan.section,"sources":plan.sources},
+        "target_context": target_context(&plan.audience)
+    })
+}
+
+/// Maps Brandi's `Audience` onto VASILIS's `target_context` field-for-field
+/// (segments: name/description/pains; narratives: capability/narrative/
+/// audiences/formats), so a real brief actually reaches the generator
+/// instead of stopping at demo-format decisions. `null` when the brief has
+/// no segments defined, rather than sending an empty-but-present object.
+pub(crate) fn target_context(audience: &Audience) -> serde_json::Value {
+    if audience.segments.is_empty() {
+        return serde_json::Value::Null;
+    }
+    serde_json::json!({
+        "segments": audience.segments.iter().map(|segment| serde_json::json!({
+            "name": segment.name,
+            "description": segment.description,
+            "pains": segment.pains,
+        })).collect::<Vec<_>>(),
+        "narratives": audience.narratives.iter().map(|narrative| serde_json::json!({
+            "capability": narrative.capability,
+            "narrative": narrative.narrative,
+            "audiences": narrative.audiences,
+            "formats": narrative.formats,
+        })).collect::<Vec<_>>(),
+        "placements": Vec::<String>::new(),
     })
 }
 
@@ -1804,6 +1835,46 @@ mod tests {
             first_requirement["brand_context"]["forbidden_motifs"],
             second_requirement["brand_context"]["forbidden_motifs"]
         );
+    }
+
+    #[test]
+    fn vasilis_requirement_carries_real_audience_as_target_context() {
+        let root = scaffold(); // default .brandi/audience.yaml: platform_engineers segment
+        let (_, plan_result) = plan(root.path(), &options()).unwrap();
+        let action = &plan_result.actions[0];
+        let objective = plan_result
+            .objectives
+            .iter()
+            .find(|item| item.id == action.objective)
+            .unwrap();
+        let requirement = vasilis_requirement(&plan_result, action, objective);
+
+        let context = &requirement["target_context"];
+        assert_eq!(context["segments"][0]["name"], "platform_engineers");
+        assert!(context["segments"][0]["pains"]
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::json!("identity drift")));
+        assert_eq!(context["narratives"][0]["capability"], "brand linting");
+    }
+
+    #[test]
+    fn vasilis_requirement_sends_null_target_context_when_no_segments_defined() {
+        let root = scaffold();
+        std::fs::write(
+            root.path().join(".brandi/audience.yaml"),
+            "segments: []\nnarratives: []\n",
+        )
+        .unwrap();
+        let (_, plan_result) = plan(root.path(), &options()).unwrap();
+        let action = &plan_result.actions[0];
+        let objective = plan_result
+            .objectives
+            .iter()
+            .find(|item| item.id == action.objective)
+            .unwrap();
+        let requirement = vasilis_requirement(&plan_result, action, objective);
+        assert!(requirement["target_context"].is_null());
     }
 
     #[test]
