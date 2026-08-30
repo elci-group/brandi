@@ -35,7 +35,7 @@ As AI-generated software becomes common, the bottleneck shifts from producing co
 - **Brand linter.** Ten ESLint-style rules with severities, suggestions, human or JSON output, and CI-friendly gates (`--fail-under`, `--strict`).
 - **Asset intelligence.** Checks image assets against the guidelines: dimensions, dominant colors versus the palette, whitespace ratio. Typography, composition, and message clarity are reported as manual-review items — Brandi does not pretend an algorithm can judge them.
 - **Repository branding.** README, CONTRIBUTING, issue templates, and release notes are first-class lint surfaces, checked like any other outward expression of the product.
-- **Project-linked social accounts.** `brandi social` opens an account workspace where provider profiles are linked to one project and treated simultaneously as content/metrics sources and public brand surfaces. Tokens remain in environment variables or the current masked TUI session; project files store only credential references.
+- **Project-linked social accounts.** `brandi social` opens an account workspace where provider profiles are linked to one project and treated simultaneously as sources and surfaces: content/metrics evidence plus public brand identity. Tokens remain in environment variables or the current masked TUI session; project files store only credential references.
 - **Social strategy engine.** Derives a capability → narrative → audience → format graph from the brief and renders content plans per audience segment.
 - **Watch daemon.** Re-lints the project when surfaces change and keeps a score history, so identity drift shows up the day it is introduced.
 - **Hot-pink terminal control room.** A Bubble Tea and Lip Gloss TUI adds Tape Studio for reasoned VHS demos and Growth for promotion, metrics, Kaptaind milestones, and approvals.
@@ -721,3 +721,4 @@ brandi lint --strict
 ```
 
 For gradual adoption on an existing project, start with a low gate such as `--fail-under 40` and raise it as findings are fixed, or quiet individual rules through `.brandi/rules.yaml` instead of disabling the lint entirely.
+# brandi
