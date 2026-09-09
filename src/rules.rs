@@ -534,7 +534,7 @@ fn prohibited_terms(guidelines: &Guidelines, surfaces: &[Surface]) -> Vec<Findin
     for s in surfaces {
         if !matches!(
             s.kind,
-            SurfaceKind::RepoDoc | SurfaceKind::Doc | SurfaceKind::UiString
+            SurfaceKind::RepoDoc | SurfaceKind::Doc | SurfaceKind::UiString | SurfaceKind::Social
         ) {
             continue;
         }
@@ -586,7 +586,7 @@ fn strip_inline_code(text: &str) -> String {
 }
 
 /// Rule `terminology-variant`: banned variants and former names (Error),
-/// plus product-name casing drift (Warning), in RepoDoc/Doc lines.
+/// plus product-name casing drift (Warning), in documents and social profiles.
 fn terminology_variants(brief: &Brief, surfaces: &[Surface]) -> Vec<Finding> {
     let product = &brief.identity.product;
     // (found, correct, matcher, is_former_name)
@@ -616,7 +616,10 @@ fn terminology_variants(brief: &Brief, surfaces: &[Surface]) -> Vec<Finding> {
 
     let mut out = Vec::new();
     for s in surfaces {
-        if !matches!(s.kind, SurfaceKind::RepoDoc | SurfaceKind::Doc) {
+        if !matches!(
+            s.kind,
+            SurfaceKind::RepoDoc | SurfaceKind::Doc | SurfaceKind::Social
+        ) {
             continue;
         }
         let text = strip_inline_code(&s.text);
@@ -1286,6 +1289,12 @@ mod tests {
                 "We frobnicate seamlessly and it is awesome, zorp.",
             ),
             surf(SurfaceKind::UiString, "src/cli.rs", 9, "Seamless setup"),
+            surf(
+                SurfaceKind::Social,
+                "social://mastodon/brandi",
+                3,
+                "An awesome profile",
+            ),
         ];
         let findings = prohibited_terms(&g, &surfaces);
         let sev = |phrase: &str| {
@@ -1306,6 +1315,9 @@ mod tests {
             ui.is_some(),
             "expected a prohibited-term hit on the UiString surface"
         );
+        assert!(findings
+            .iter()
+            .any(|finding| finding.kind == Some(SurfaceKind::Social)));
         let f = findings
             .iter()
             .find(|f| f.message.contains("frobnicate"))

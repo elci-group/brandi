@@ -202,7 +202,7 @@ pub enum Commands {
         #[command(subcommand)]
         command: AssetsCommands,
     },
-    /// Narrative graph and content planning from the brief
+    /// Interactive account workspace, narrative planning, and delivery
     Social {
         #[command(subcommand)]
         command: Option<SocialCommands>,
@@ -683,7 +683,19 @@ mod creative_command_tests {
         command.build();
         let mut leaves = 0;
         visit(&command, &mut leaves);
-        assert_eq!(leaves, 38);
+        assert_eq!(leaves, 41);
+    }
+
+    #[test]
+    fn social_without_a_subcommand_selects_the_tui() {
+        let cli = Cli::try_parse_from(["brandi", "social", "--path", "/project"]).unwrap();
+        match cli.command {
+            Commands::Social { command, path } => {
+                assert!(command.is_none());
+                assert_eq!(path, PathBuf::from("/project"));
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
     }
 }
 

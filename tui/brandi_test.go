@@ -160,6 +160,15 @@ func TestControlRoomTabs(t *testing.T) {
 	}
 }
 
+func TestSocialLaunchSelectsSocialTab(t *testing.T) {
+	if got := parseStartTab("social"); got != tabSocial {
+		t.Fatalf("start tab = %v, want social", got)
+	}
+	if got := parseStartTab("unknown"); got != tabOverview {
+		t.Fatalf("unknown start tab = %v, want overview", got)
+	}
+}
+
 func TestDiscoverProjectRootFindsNamedWorkspaceChild(t *testing.T) {
 	workspace := t.TempDir()
 	genome := filepath.Join(workspace, "brandi", ".brandi")

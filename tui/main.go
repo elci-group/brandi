@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -18,6 +19,7 @@ func main() {
 	workspace := flag.String("workspace", "", "portfolio root (default: BRANDI_WORKSPACE_ROOT or the user's home)")
 	brandi := flag.String("brandi", "", "path to the brandi binary (default: project release, debug, then PATH)")
 	noWatch := flag.Bool("no-watch", false, "start with live re-lint disabled")
+	startTab := flag.String("tab", "overview", "initial view: overview, findings, rules, social, tape, or growth")
 	flag.Parse()
 
 	*path = resolveProjectPath(*path)
@@ -28,11 +30,22 @@ func main() {
 		os.Exit(2)
 	}
 
-	p := tea.NewProgram(newModel(*path, *workspace, b, !*noWatch), tea.WithAltScreen())
+	m := newModel(*path, *workspace, b, !*noWatch)
+	m.tab = parseStartTab(*startTab)
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "tui:", err)
 		os.Exit(1)
 	}
+}
+
+func parseStartTab(value string) tab {
+	for index, name := range tabNames {
+		if strings.EqualFold(value, name) || (value == "tape" && name == "Tape Studio") {
+			return tab(index)
+		}
+	}
+	return tabOverview
 }
 
 func resolveWorkspacePath(flagValue string) string {

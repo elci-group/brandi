@@ -24,8 +24,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 use walkdir::WalkDir;
 
-pub const SCAN_SCHEMA_VERSION: &str = "brandi-scan-v6";
-const PHASES: u64 = 5;
+pub const SCAN_SCHEMA_VERSION: &str = "brandi-scan-v7";
+const PHASES: u64 = 6;
 const BOUND_TOKEN_LIMIT_PER_FILE: usize = 512;
 const BOUND_SIZE_LIMIT_PER_FILE: u64 = crate::surface::MAX_SOURCE_FILE_BYTES;
 const MAX_BOUND_SNAPSHOT_BYTES: u64 = 64 * 1024 * 1024;
@@ -113,6 +113,10 @@ pub struct FindingDelivery {
     pub kind: DeliveryKind,
     pub target: PathBuf,
     pub available: bool,
+    /// Surface kinds whose findings are routed to this destination.
+    pub surface_kinds: Vec<String>,
+    /// Human-readable explanation of why this destination is targeted.
+    pub reason: String,
     /// Stable indexes into [`ScanReport::findings`].
     pub finding_indices: Vec<usize>,
 }
@@ -153,6 +157,7 @@ pub struct ScanReport {
     pub files_scanned: usize,
     pub milestones: Vec<ScanMilestone>,
     pub bound: BoundEvidence,
+    pub target_summary: crate::target_use::TargetSummary,
     pub context: BrandContext,
     pub dreams: DreamContext,
     pub findings: Vec<Finding>,
@@ -270,6 +275,32 @@ pub fn run(requested_root: Option<&Path>) -> Result<ScanReport> {
             )
         },
     )?;
+    let target_summary = tracker.phase(
+        "target-use",
+        "Identify target surfaces and frontend use with Padagonia",
+        || crate::target_use::identify(&root, &extraction.surfaces),
+        |summary| {
+            let frontends = if summary.frontends.is_empty() {
+                "frontend not identified".into()
+            } else {
+                summary
+                    .frontends
+                    .iter()
+                    .map(|frontend| frontend.kind.label())
+                    .collect::<Vec<_>>()
+                    .join(" + ")
+            };
+            format!(
+                "{} surface classes · {frontends} · Padagonia {}",
+                summary.targeted_surfaces.len(),
+                if summary.padagonia.reused {
+                    "reused prior inference"
+                } else {
+                    "recorded inference"
+                }
+            )
+        },
+    )?;
     let bound_executable = find_executable("bound").ok_or_else(|| {
         BrandiError::NotFound(
             "bound is required by `brandi scan`; install it and ensure it is on PATH".into(),
@@ -349,6 +380,7 @@ pub fn run(requested_root: Option<&Path>) -> Result<ScanReport> {
         files_scanned: extraction.files_scanned,
         milestones: tracker.completed,
         bound,
+        target_summary,
         context,
         dreams,
         findings,
@@ -885,15 +917,38 @@ fn build_deliveries(
     }
     routes
         .into_iter()
-        .map(
-            |(target, (kind, available, finding_indices))| FindingDelivery {
+        .map(|(target, (kind, available, finding_indices))| {
+            let surface_kinds = finding_indices
+                .iter()
+                .filter_map(|index| findings.get(*index)?.kind)
+                .map(|kind| kind.to_string())
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect();
+            FindingDelivery {
                 kind,
                 target,
                 available,
+                surface_kinds,
+                reason: delivery_reason(kind).into(),
                 finding_indices,
-            },
-        )
+            }
+        })
         .collect()
+}
+
+fn delivery_reason(kind: DeliveryKind) -> &'static str {
+    match kind {
+        DeliveryKind::Brief => {
+            "The brief governs project identity, audience, and positioning for these surfaces."
+        }
+        DeliveryKind::Guideline => {
+            "This guideline file governs the rules violated by the routed surface findings."
+        }
+        DeliveryKind::Dream => {
+            "This Dreamseq plan references the target project and receives all findings as read-only delivery context."
+        }
+    }
 }
 
 fn policy_targets(
@@ -1001,6 +1056,70 @@ pub fn render_human(report: &ScanReport) -> String {
     out.push(summary.to_string().trim_end().to_string());
 
     out.push(String::new());
+    out.push(output::styled("Target use", OutputSeverity::Info).to_string());
+    let frontend_summary = if report.target_summary.frontends.is_empty() {
+        "not identified from project evidence".into()
+    } else {
+        report
+            .target_summary
+            .frontends
+            .iter()
+            .map(|frontend| frontend.kind.label())
+            .collect::<Vec<_>>()
+            .join(" + ")
+    };
+    out.push(format!("Frontend  {frontend_summary}"));
+    out.push(format!(
+        "Padagonia  {} · {}",
+        if report.target_summary.padagonia.reused {
+            "reused cached target-use inference"
+        } else {
+            "recorded fresh target-use inference"
+        },
+        report.target_summary.padagonia.cache_path.display()
+    ));
+    for frontend in &report.target_summary.frontends {
+        out.push(format!(
+            "  {}  {} · evidence: {}",
+            frontend.kind.label(),
+            frontend.reason,
+            frontend
+                .evidence
+                .iter()
+                .map(|path| path.display().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        ));
+    }
+
+    out.push(String::new());
+    out.push(output::styled("Targeted surfaces", OutputSeverity::Info).to_string());
+    let mut targets = Table::new();
+    targets
+        .set_style(if unicode {
+            TableStyle::Square
+        } else {
+            TableStyle::Ascii
+        })
+        .set_content_arrangement(ContentArrangement::Dynamic)
+        .set_header(vec!["Surface", "Count", "Audience", "Why", "Examples"]);
+    for target in &report.target_summary.targeted_surfaces {
+        targets.add_row(vec![
+            target.kind.clone(),
+            target.count.to_string(),
+            target.audiences.join(", "),
+            target.reason.clone(),
+            target
+                .representative_paths
+                .iter()
+                .map(|path| path.display().to_string())
+                .collect::<Vec<_>>()
+                .join(", "),
+        ]);
+    }
+    out.push(targets.to_string().trim_end().to_string());
+
+    out.push(String::new());
     out.push(output::styled("Surface significance", OutputSeverity::Info).to_string());
     let mut significance = Table::new();
     significance
@@ -1051,11 +1170,18 @@ pub fn render_human(report: &ScanReport) -> String {
         } else {
             TableStyle::Ascii
         })
-        .set_header(vec!["Target", "Kind", "Findings"]);
+        .set_content_arrangement(ContentArrangement::Dynamic)
+        .set_header(vec!["Target", "Kind", "Surfaces", "Why", "Findings"]);
     for delivery in report.deliveries.iter().take(output::DEFAULT_LIST_CAP) {
         deliveries.add_row(vec![
             delivery.target.display().to_string(),
             format!("{:?}", delivery.kind).to_ascii_lowercase(),
+            if delivery.surface_kinds.is_empty() {
+                "none".into()
+            } else {
+                delivery.surface_kinds.join(", ")
+            },
+            delivery.reason.clone(),
             if delivery.available {
                 delivery.finding_indices.len().to_string()
             } else {
@@ -1349,7 +1475,7 @@ mod tests {
         let finding = Finding {
             rule_id: "error-prefix".into(),
             severity: crate::types::Severity::Warning,
-            kind: None,
+            kind: Some(crate::types::SurfaceKind::UiString),
             path: root.path().join("README.md"),
             line: Some(1),
             message: "message".into(),
@@ -1357,8 +1483,14 @@ mod tests {
             semantics: crate::types::FindingSemantics::default(),
         };
         let deliveries = build_deliveries(&context, &dreams, &[finding]);
-        assert!(deliveries
+        let dream_delivery = deliveries
             .iter()
-            .any(|delivery| { delivery.target == dream && delivery.finding_indices == vec![0] }));
+            .find(|delivery| delivery.target == dream)
+            .unwrap();
+        assert_eq!(dream_delivery.finding_indices, vec![0]);
+        assert_eq!(dream_delivery.surface_kinds, vec!["ui_string"]);
+        assert!(dream_delivery
+            .reason
+            .contains("references the target project"));
     }
 }

@@ -26,4 +26,5 @@ pub mod scan;
 pub mod social;
 pub mod surface;
 pub mod tape;
+pub mod target_use;
 pub mod types;

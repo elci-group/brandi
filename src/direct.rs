@@ -6,9 +6,11 @@
 //! selected asset can be promoted into the project.
 
 use crate::assets;
-use crate::brief::{Audience, Brief};
+use crate::brief::{Audience, Brief, Identity};
 use crate::error::{BrandiError, Result};
-use crate::guidelines::{parse_hex_color, Guidelines, VisualLanguage};
+use crate::guidelines::{
+    parse_hex_color, AssetSpec, Guidelines, Typography, VisualLanguage, Voice,
+};
 use crate::process::{run_bounded, run_bounded_with_input, MAX_SUBPROCESS_OUTPUT_BYTES};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
@@ -181,10 +183,28 @@ pub struct DirectPlan {
     /// to generation providers such as VASILIS as `target_context` instead
     /// of leaving audience data unused past demo-format decisions.
     pub audience: Audience,
+    /// Full typed snapshots from the parsed Brandi document set. Keeping
+    /// these beside the narrowed generation fields makes the downstream
+    /// handoff auditable and prevents identity/voice/asset policy from being
+    /// silently discarded after validation.
+    pub identity: Identity,
+    pub voice: Voice,
+    pub typography: Typography,
+    pub asset_policy: AssetSpec,
+    pub color_tolerance: u8,
+    pub brand_documents: Vec<BrandDocumentEvidence>,
     pub objectives: Vec<ObjectiveConfig>,
     pub actions: Vec<GenerationAction>,
     pub reviewer: ReviewerRoute,
     pub postflight: PostflightPlan,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BrandDocumentEvidence {
+    pub kind: String,
+    pub path: PathBuf,
+    pub sha256: String,
+    pub bytes: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -398,6 +418,7 @@ pub fn plan(root: &Path, options: &DirectOptions) -> Result<(DirectConfig, Direc
     let brief_value = serde_json::to_value(&brief)?;
     let section_value = select_section(&brief_value, &options.section)?;
     let sources = collect_sources(root, &options.sources)?;
+    let brand_documents = collect_brand_documents(root)?;
     let palette = collect_palette(&guidelines);
     let routes = resolve_routes(&config, &options.routes)?;
     let system_prompt = system_prompt(&brief, &guidelines, &options.section);
@@ -416,6 +437,12 @@ pub fn plan(root: &Path, options: &DirectOptions) -> Result<(DirectConfig, Direc
         "section_value": section_value,
         "strategy": config.strategy,
         "sources": sources,
+        "brand_documents": brand_documents,
+        "identity": brief.identity,
+        "voice": guidelines.voice,
+        "typography": guidelines.visual.typography,
+        "asset_policy": guidelines.visual.assets,
+        "color_tolerance": guidelines.visual.color_tolerance,
         "palette": palette,
         "objectives": config.objectives,
         "actions": actions,
@@ -452,6 +479,12 @@ pub fn plan(root: &Path, options: &DirectOptions) -> Result<(DirectConfig, Direc
         visual_language: guidelines.visual.visual_language.clone(),
         forbidden_motifs: guidelines.prohibited.visual_motifs.clone(),
         audience: brief.audience.clone(),
+        identity: brief.identity.clone(),
+        voice: guidelines.voice.clone(),
+        typography: guidelines.visual.typography.clone(),
+        asset_policy: guidelines.visual.assets.clone(),
+        color_tolerance: guidelines.visual.color_tolerance,
+        brand_documents,
         objectives: config.objectives.clone(),
         actions,
         reviewer,
@@ -461,6 +494,28 @@ pub fn plan(root: &Path, options: &DirectOptions) -> Result<(DirectConfig, Direc
         },
     };
     Ok((config, plan))
+}
+
+fn collect_brand_documents(root: &Path) -> Result<Vec<BrandDocumentEvidence>> {
+    const DOCUMENTS: [(&str, &str); 5] = [
+        ("identity", ".brandi/identity.yaml"),
+        ("audience", ".brandi/audience.yaml"),
+        ("voice", ".brandi/voice.yaml"),
+        ("visual", ".brandi/visual.yaml"),
+        ("prohibited", ".brandi/prohibited.yaml"),
+    ];
+    DOCUMENTS
+        .into_iter()
+        .map(|(kind, relative)| {
+            let bytes = fs::read(root.join(relative))?;
+            Ok(BrandDocumentEvidence {
+                kind: kind.into(),
+                path: PathBuf::from(relative),
+                sha256: digest_bytes(&bytes),
+                bytes: u64::try_from(bytes.len()).unwrap_or(u64::MAX),
+            })
+        })
+        .collect()
 }
 
 pub fn run(root: &Path, options: &DirectOptions) -> Result<DirectOutcome> {
@@ -1068,6 +1123,13 @@ fn vasilis_requirement(
 ) -> serde_json::Value {
     let sourced = |value: &str| serde_json::json!({"value": value, "source": "observed"});
     let visual_language = &plan.visual_language;
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let min_whitespace_milli =
+        (plan.asset_policy.min_whitespace.clamp(0.0, 1.0) * 1000.0).round() as u32;
+    let mut target_context = target_context(&plan.audience);
+    if let Some(context) = target_context.as_object_mut() {
+        context.insert("placements".into(), serde_json::json!([objective.id]));
+    }
     serde_json::json!({
         "id": action.id, "revision": action.sequence + 1,
         "namespace": {"tenant":"local","project":plan.plan_id,"application":"brandi-direct"},
@@ -1092,10 +1154,40 @@ fn vasilis_requirement(
                 "texture": sourced(&visual_language.texture),
                 "illustration_style": sourced(&visual_language.illustration_style)
             },
-            "forbidden_motifs": plan.forbidden_motifs
+            "forbidden_motifs": plan.forbidden_motifs,
+            "identity": {
+                "product_name": plan.identity.product.name,
+                "tagline": plan.identity.product.tagline,
+                "mission": plan.identity.product.mission,
+                "aliases": plan.identity.product.aliases,
+                "former_names": plan.identity.product.former_names,
+                "archetypes": plan.identity.archetype,
+                "canonical_terminology": plan.identity.terminology.canonical,
+                "banned_variants": plan.identity.terminology.banned_variants
+            },
+            "voice": {
+                "traits": plan.voice.traits,
+                "trait_signals": plan.voice.trait_signals,
+                "sentence_case_headings": plan.voice.style.sentence_case_headings,
+                "max_exclamation_marks": plan.voice.style.max_exclamation_marks,
+                "error_forbid_prefixes": plan.voice.style.error_messages.forbid_prefixes,
+                "error_forbid_numeric_codes": plan.voice.style.error_messages.forbid_numeric_codes,
+                "error_require_actionable": plan.voice.style.error_messages.require_actionable
+            },
+            "typography": {
+                "style": plan.typography.style,
+                "preferred_fonts": plan.typography.preferred_fonts
+            },
+            "asset_policy": {
+                "min_whitespace_milli": min_whitespace_milli,
+                "max_file_kb": plan.asset_policy.max_file_kb,
+                "coherence_min_palette": plan.asset_policy.coherence_min_palette,
+                "color_tolerance": plan.color_tolerance
+            },
+            "documents": plan.brand_documents
         },
         "required_variants":["master"], "evidence":{"brief_section":plan.section,"sources":plan.sources},
-        "target_context": target_context(&plan.audience)
+        "target_context": target_context
     })
 }
 
@@ -1134,8 +1226,13 @@ fn execute_vasilis(
     let requirement = vasilis_requirement(plan, action, objective);
     let request = output.with_extension("request.json");
     fs::write(&request, serde_json::to_vec_pretty(&requirement)?)?;
+    let project_binary = root.join("target/debug/vasilis");
+    let binary = std::env::var_os("BRANDI_VASILIS_BIN")
+        .map(PathBuf::from)
+        .or_else(|| project_binary.is_file().then_some(project_binary))
+        .unwrap_or_else(|| PathBuf::from("vasilis"));
     let result = run_bounded(
-        Command::new("vasilis")
+        Command::new(binary)
             .arg("generate")
             .arg("--requirement")
             .arg(&request)
@@ -1778,6 +1875,39 @@ mod tests {
     }
 
     #[test]
+    fn plan_and_vasilis_requirement_preserve_the_parsed_brand_document_set() {
+        let root = scaffold();
+        let (_, plan_result) = plan(root.path(), &options()).unwrap();
+        let kinds = plan_result
+            .brand_documents
+            .iter()
+            .map(|document| document.kind.as_str())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            kinds,
+            ["identity", "audience", "voice", "visual", "prohibited"]
+        );
+        assert!(plan_result
+            .brand_documents
+            .iter()
+            .all(|document| document.bytes > 0 && document.sha256.starts_with("sha256:")));
+
+        let action = &plan_result.actions[0];
+        let objective = plan_result
+            .objectives
+            .iter()
+            .find(|item| item.id == action.objective)
+            .unwrap();
+        let requirement = vasilis_requirement(&plan_result, action, objective);
+        let brand = &requirement["brand_context"];
+        assert_eq!(brand["identity"]["product_name"], "Brandi");
+        assert_eq!(brand["voice"]["traits"][0], "precise");
+        assert_eq!(brand["typography"]["style"], "technical_modern");
+        assert_eq!(brand["asset_policy"]["min_whitespace_milli"], 250);
+        assert_eq!(brand["documents"].as_array().unwrap().len(), 5);
+    }
+
+    #[test]
     fn vasilis_requirement_reflects_guideline_config_not_hardcoded_literals() {
         let first_root = scaffold();
         std::fs::write(
@@ -1856,6 +1986,7 @@ mod tests {
             .unwrap()
             .contains(&serde_json::json!("identity drift")));
         assert_eq!(context["narratives"][0]["capability"], "brand linting");
+        assert_eq!(context["placements"][0], objective.id);
     }
 
     #[test]

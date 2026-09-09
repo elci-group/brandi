@@ -2,7 +2,7 @@
 //! brief/guidelines and the (separately owned) surface/rules/report/assets/
 //! social/daemon modules.
 
-use crate::brief::Brief;
+use crate::brief::{Audience, Brief, Identity, Narrative, Product, Segment, Terminology};
 use crate::cli::{AssetKindArg, Format, UninitializedAction};
 use crate::error::{BrandiError, Result};
 use crate::guidelines::Guidelines;
@@ -12,6 +12,8 @@ use crate::{
 };
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
+
+const MAX_INIT_EVIDENCE_BYTES: u64 = 256 * 1024;
 
 /// Resolve the Brandi project associated with a path by walking upward to the
 /// nearest directory containing `.brandi/`. With no target, resolution starts
@@ -208,9 +210,141 @@ pub fn init(path: &Path) -> Result<()> {
 }
 
 fn scaffold_project(path: &Path) -> Result<Vec<PathBuf>> {
-    let mut created = Brief::scaffold(path)?;
+    // Initialization cannot use the ordinary scan pipeline: that pipeline
+    // evaluates a brief which does not exist yet. Instead, scan a small,
+    // explicit set of root-level identity sources and only tailor the brief
+    // when they establish both a name and a description.
+    let inferred = infer_brief_from_repository(path);
+    let mut created = Brief::scaffold_with(path, inferred.as_ref())?;
     created.extend(Guidelines::scaffold(path)?);
     Ok(created)
+}
+
+/// Infer a minimal, evidence-backed brief from repository metadata and README
+/// prose. `None` deliberately preserves the established Brandi defaults.
+fn infer_brief_from_repository(root: &Path) -> Option<Brief> {
+    let readme = read_init_evidence(&root.join("README.md"));
+    let (readme_name, readme_description) =
+        readme.as_deref().map(readme_identity).unwrap_or_default();
+    let (manifest_name, manifest_description) = manifest_identity(root);
+    let name = readme_name.or(manifest_name)?;
+    let description = manifest_description.or(readme_description)?;
+    if name.trim().is_empty() || description.trim().is_empty() {
+        return None;
+    }
+
+    let segment_name = "product_teams".to_string();
+    Some(Brief {
+        root: root.to_path_buf(),
+        identity: Identity {
+            product: Product {
+                name: name.clone(),
+                tagline: description.clone(),
+                mission: description.clone(),
+                aliases: Vec::new(),
+                former_names: Vec::new(),
+            },
+            archetype: vec!["engineer".into()],
+            terminology: Terminology::default(),
+        },
+        audience: Audience {
+            segments: vec![Segment {
+                name: segment_name.clone(),
+                description: format!("Teams that build and maintain {name}"),
+                pains: vec!["communicating product value consistently".into()],
+            }],
+            narratives: vec![Narrative {
+                capability: name,
+                narrative: description,
+                audiences: vec![segment_name],
+                formats: vec!["docs".into(), "demo_video".into()],
+            }],
+        },
+    })
+}
+
+fn read_init_evidence(path: &Path) -> Option<String> {
+    let metadata = std::fs::metadata(path).ok()?;
+    if !metadata.is_file() || metadata.len() > MAX_INIT_EVIDENCE_BYTES {
+        return None;
+    }
+    std::fs::read_to_string(path).ok()
+}
+
+fn manifest_identity(root: &Path) -> (Option<String>, Option<String>) {
+    for file in ["package.json", "Cargo.toml", "pyproject.toml", "go.mod"] {
+        let Some(content) = read_init_evidence(&root.join(file)) else {
+            continue;
+        };
+        let identity = match file {
+            "package.json" => serde_json::from_str::<serde_json::Value>(&content)
+                .ok()
+                .map(|value| {
+                    let text = |key| value.get(key)?.as_str().map(str::to_owned);
+                    (text("name"), text("description"))
+                }),
+            "go.mod" => content.lines().find_map(|line| {
+                line.trim().strip_prefix("module ").map(|module| {
+                    let name = module.rsplit('/').next().unwrap_or(module).to_string();
+                    (Some(name), None)
+                })
+            }),
+            _ => Some((
+                toml_string_field(&content, "name"),
+                toml_string_field(&content, "description"),
+            )),
+        };
+        if let Some((name, description)) = identity {
+            if name.is_some() || description.is_some() {
+                return (name, description);
+            }
+        }
+    }
+    (None, None)
+}
+
+fn toml_string_field(content: &str, field: &str) -> Option<String> {
+    content.lines().find_map(|line| {
+        let (key, value) = line.split_once('=')?;
+        if key.trim() != field {
+            return None;
+        }
+        let value = value.trim().trim_matches('"').trim_matches('\'').trim();
+        (!value.is_empty()).then(|| value.to_string())
+    })
+}
+
+fn readme_identity(readme: &str) -> (Option<String>, Option<String>) {
+    let mut name = None;
+    let mut description_lines = Vec::new();
+    let mut after_title = false;
+    for line in readme.lines() {
+        let trimmed = line.trim();
+        if name.is_none() {
+            if let Some(title) = trimmed.strip_prefix("# ") {
+                let title = title.trim();
+                if !title.is_empty() {
+                    name = Some(title.to_string());
+                    after_title = true;
+                }
+                continue;
+            }
+        }
+        if after_title {
+            if trimmed.is_empty() {
+                if !description_lines.is_empty() {
+                    break;
+                }
+                continue;
+            }
+            if trimmed.starts_with('#') || trimmed.starts_with("![") || trimmed.starts_with('[') {
+                continue;
+            }
+            description_lines.push(trimmed);
+        }
+    }
+    let description = description_lines.join(" ");
+    (name, (!description.is_empty()).then_some(description))
 }
 
 /// `brandi brief [PATH]`: display the brief for the nearest associated project.
@@ -738,6 +872,8 @@ pub fn social_tui(path: &Path) -> Result<()> {
         .arg(path)
         .arg("--brandi")
         .arg(current)
+        .arg("--tab")
+        .arg("social")
         .status()?;
     if !status.success() {
         return Err(BrandiError::Invalid(format!(
@@ -1251,4 +1387,83 @@ fn telegram_config_path(config: Option<&Path>) -> PathBuf {
             PathBuf::from(".config/brandi/telegram.yaml")
         }
     })
+}
+
+#[cfg(test)]
+mod init_inference_tests {
+    use super::*;
+
+    #[test]
+    fn init_infers_a_brief_from_package_metadata() {
+        let temporary = tempfile::tempdir().unwrap();
+        std::fs::write(
+            temporary.path().join("package.json"),
+            r#"{"name":"signal-kit","description":"Tools for reliable incident response."}"#,
+        )
+        .unwrap();
+
+        let inferred = infer_brief_from_repository(temporary.path()).unwrap();
+        assert_eq!(inferred.identity.product.name, "signal-kit");
+        assert_eq!(
+            inferred.identity.product.tagline,
+            "Tools for reliable incident response."
+        );
+        assert_eq!(inferred.audience.segments[0].name, "product_teams");
+    }
+
+    #[test]
+    fn init_combines_manifest_name_with_readme_intro() {
+        let temporary = tempfile::tempdir().unwrap();
+        std::fs::write(
+            temporary.path().join("go.mod"),
+            "module example.com/pulse\n",
+        )
+        .unwrap();
+        std::fs::write(
+            temporary.path().join("README.md"),
+            "# Pulse\n\nA concise status page for distributed teams.\n",
+        )
+        .unwrap();
+
+        let inferred = infer_brief_from_repository(temporary.path()).unwrap();
+        assert_eq!(inferred.identity.product.name, "Pulse");
+        assert_eq!(
+            inferred.identity.product.mission,
+            "A concise status page for distributed teams."
+        );
+    }
+
+    #[test]
+    fn init_uses_existing_defaults_when_evidence_is_insufficient() {
+        let temporary = tempfile::tempdir().unwrap();
+        assert!(infer_brief_from_repository(temporary.path()).is_none());
+
+        scaffold_project(temporary.path()).unwrap();
+        let brief = Brief::load(temporary.path()).unwrap();
+        assert_eq!(brief.identity.product.name, "Brandi");
+    }
+
+    #[test]
+    fn inferred_scaffold_does_not_overwrite_existing_brief_files() {
+        let temporary = tempfile::tempdir().unwrap();
+        std::fs::write(
+            temporary.path().join("package.json"),
+            r#"{"name":"signal-kit","description":"Tools for reliable incident response."}"#,
+        )
+        .unwrap();
+        std::fs::create_dir_all(temporary.path().join(".brandi")).unwrap();
+        std::fs::write(
+            temporary.path().join(".brandi/identity.yaml"),
+            "product:\n  name: Existing\n",
+        )
+        .unwrap();
+
+        scaffold_project(temporary.path()).unwrap();
+        let identity =
+            std::fs::read_to_string(temporary.path().join(".brandi/identity.yaml")).unwrap();
+        assert_eq!(identity, "product:\n  name: Existing\n");
+        let audience =
+            std::fs::read_to_string(temporary.path().join(".brandi/audience.yaml")).unwrap();
+        assert!(audience.contains("signal-kit"));
+    }
 }

@@ -152,15 +152,27 @@ impl Brief {
     /// Idempotent: existing files are never overwritten. Returns the list of
     /// files actually created.
     pub fn scaffold(project_root: &Path) -> Result<Vec<PathBuf>> {
+        Self::scaffold_with(project_root, None)
+    }
+
+    /// Create missing brief files, optionally using repository-derived content.
+    ///
+    /// Callers pass an inferred brief only when they have sufficient local
+    /// evidence. Existing files are still never overwritten.
+    pub fn scaffold_with(project_root: &Path, inferred: Option<&Brief>) -> Result<Vec<PathBuf>> {
         let dir = project_root.join(".brandi");
         std::fs::create_dir_all(&dir)?;
 
         let mut created: Vec<PathBuf> = Vec::new();
-        let defaults: [(&str, &str); 2] = [
-            ("identity.yaml", IDENTITY_YAML),
-            ("audience.yaml", AUDIENCE_YAML),
-        ];
-        for (name, content) in defaults {
+        let identity = inferred
+            .map(|brief| serde_yaml::to_string(&brief.identity))
+            .transpose()?
+            .unwrap_or_else(|| IDENTITY_YAML.to_string());
+        let audience = inferred
+            .map(|brief| serde_yaml::to_string(&brief.audience))
+            .transpose()?
+            .unwrap_or_else(|| AUDIENCE_YAML.to_string());
+        for (name, content) in [("identity.yaml", identity), ("audience.yaml", audience)] {
             let path = dir.join(name);
             if !path.exists() {
                 std::fs::write(&path, content)?;

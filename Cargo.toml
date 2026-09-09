@@ -1,6 +1,6 @@
 [package]
 name = "brandi"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Brand coherence intelligence layer: lint user-facing surfaces against a machine-readable brand genome"
 publish = false
@@ -34,7 +34,7 @@ tree-sitter-javascript = "0.25.0"
 tree-sitter-typescript = "0.23.2"
 tree-sitter-python = "0.25.0"
 unicode-width = "0.2"
+padagonia = { path = "../padagonia" }
 
 [dev-dependencies]
 tempfile = "3"
-padagonia = { path = "../padagonia" }
