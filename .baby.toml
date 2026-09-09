@@ -3,9 +3,9 @@ build_system = "cargo"
 binary = "brandi"
 artifact = "target/release/brandi"
 commands = [
-  ["git", "clone", "--depth", "1", "https://github.com/elci-group/3form.git", "../3form"],
-  ["git", "clone", "--depth", "1", "https://github.com/elci-group/bound.git", "../bound"],
-  ["git", "clone", "--depth", "1", "https://github.com/elci-group/mesut.git", "../mesut"],
-  ["git", "clone", "--depth", "1", "https://github.com/elci-group/padagonia.git", "../padagonia"],
+  ["git", "clone", "--depth", "1", "git@github.com:elci-group/3form.git", "../3form"],
+  ["git", "clone", "--depth", "1", "git@github.com:elci-group/bound.git", "../bound"],
+  ["git", "clone", "--depth", "1", "git@github.com:elci-group/mesut.git", "../mesut"],
+  ["git", "clone", "--depth", "1", "git@github.com:elci-group/padagonia.git", "../padagonia"],
   ["cargo", "build", "--release", "--locked"],
 ]
