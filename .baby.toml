@@ -7,5 +7,5 @@ commands = [
   ["git", "clone", "--depth", "1", "git@github.com:elci-group/bound.git", "../bound"],
   ["git", "clone", "--depth", "1", "git@github.com:elci-group/mesut.git", "../mesut"],
   ["git", "clone", "--depth", "1", "git@github.com:elci-group/padagonia.git", "../padagonia"],
-  ["cargo", "build", "--release", "--locked"],
+  ["cargo", "build", "--release"],
 ]
