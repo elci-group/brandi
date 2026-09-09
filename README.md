@@ -86,9 +86,10 @@ brandi init --path ./my-project
 
 Brandi can keep its user-installed binary aligned with `main` using
 [Theosis](https://github.com/elci-group/theosis). The checked-in Baby recipe
-builds the release binary, while the persistent user timer checks every six
-hours (with a small random delay), never downgrades, and verifies the installed
-version after an update.
+builds the release binary and fetches its public, sibling Rust dependencies
+inside Theosis’s disposable transaction; the persistent user timer checks every
+six hours (with a small random delay), never downgrades, and verifies the
+installed version after an update.
 
 Install `theosis` and `baby` in `~/.local/bin`, install Brandi there once, then
 enable the timer from a trusted checkout:

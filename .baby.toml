@@ -2,4 +2,10 @@ schema = "baby.install/v1"
 build_system = "cargo"
 binary = "brandi"
 artifact = "target/release/brandi"
-commands = [["cargo", "build", "--release", "--locked"]]
+commands = [
+  ["git", "clone", "--depth", "1", "https://github.com/elci-group/3form.git", "../3form"],
+  ["git", "clone", "--depth", "1", "https://github.com/elci-group/bound.git", "../bound"],
+  ["git", "clone", "--depth", "1", "https://github.com/elci-group/mesut.git", "../mesut"],
+  ["git", "clone", "--depth", "1", "https://github.com/elci-group/padagonia.git", "../padagonia"],
+  ["cargo", "build", "--release", "--locked"],
+]
