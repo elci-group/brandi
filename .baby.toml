@@ -1,0 +1,5 @@
+schema = "baby.install/v1"
+build_system = "cargo"
+binary = "brandi"
+artifact = "target/release/brandi"
+commands = [["cargo", "build", "--release", "--locked"]]

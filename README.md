@@ -82,6 +82,26 @@ brandi init
 brandi init --path ./my-project
 ```
 
+### Automatic bleeding-edge updates
+
+Brandi can keep its user-installed binary aligned with `main` using
+[Theosis](https://github.com/elci-group/theosis). The checked-in Baby recipe
+builds the release binary, while the persistent user timer checks every six
+hours (with a small random delay), never downgrades, and verifies the installed
+version after an update.
+
+Install `theosis` and `baby` in `~/.local/bin`, install Brandi there once, then
+enable the timer from a trusted checkout:
+
+```bash
+scripts/install-theosis-updater.sh
+systemctl --user status brandi-theosis.timer
+```
+
+The timer’s unit is `brandi-theosis.service`; its transaction evidence lives
+under `~/.local/state/theosis/brandi/`. Disable automatic updates with
+`systemctl --user disable --now brandi-theosis.timer`.
+
 ### `brandi brief [PATH]`
 
 Display the associated project's merged brief (`identity.yaml` and `audience.yaml`). With no path, Brandi starts at the current directory and walks upward to the nearest `.brandi/`; a target path may be a project directory, nested directory, or file. Use `--format json` for a stable machine-readable document.

@@ -1,0 +1,10 @@
+[Unit]
+Description=Update Brandi from its configured bleeding-edge Git branch
+Documentation=https://github.com/elci-group/theosis
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=THEOSIS_STATE=%h/.local/state/theosis/brandi
+ExecStart=%h/.local/bin/theosis update --remote git@github.com:elci-group/brandi.git --ref main --binary %h/.local/bin/brandi --install-dir %h/.local/bin --json

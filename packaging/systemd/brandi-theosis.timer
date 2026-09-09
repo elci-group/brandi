@@ -1,0 +1,12 @@
+[Unit]
+Description=Keep Brandi updated from Git main
+
+[Timer]
+OnBootSec=5m
+OnUnitActiveSec=6h
+Persistent=true
+RandomizedDelaySec=15m
+Unit=brandi-theosis.service
+
+[Install]
+WantedBy=timers.target
