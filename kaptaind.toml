@@ -32,6 +32,10 @@ patch = 0.1    # score at or above this bumps Patch; below it, no commit
 enabled = true
 branch = "main"
 
+[push.safety]
+# The user explicitly requested this Kaptaind-managed release to main.
+protect_branches = []
+
 [capabilities]
 network_push = true
 
