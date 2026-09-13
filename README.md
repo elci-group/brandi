@@ -33,7 +33,7 @@ As AI-generated software becomes common, the bottleneck shifts from producing co
 - **Evidence-rich surface scanner.** Runs a transparent six-milestone pipeline, uses Bound to capture disposable and size-limited source evidence, and separates detection confidence from significance. Target-use identification reports whether evidence describes a CLI, TUI, GUI, web frontend, mobile app, or TV app; its Padagonia software ontology is fingerprinted and reused until relevant manifests, markers, or surface paths change. Every surface carries domain, subtype, provenance, structured audience exposure, relevance, authority, and provenance-adjusted semantic weight. Findings route back to their governing context; when Dreamseq is installed, `.dreams/*.dreams` files found from the current directory upward are included as read-only delivery targets. An optional `.brandiignore` at the project root (one path per line, `#` comments allowed) excludes specific files or directories from surface extraction.
 - **Proposal engine.** Scans the same surfaces and spends a bounded generative budget on concrete before/after revisions for objects that are subject to stylisation.
 - **Brand linter.** Ten ESLint-style rules with severities, suggestions, human or JSON output, and CI-friendly gates (`--fail-under`, `--strict`).
-- **Asset intelligence.** Checks image assets against the guidelines: dimensions, dominant colors versus the palette, whitespace ratio. Typography, composition, and message clarity are reported as manual-review items — Brandi does not pretend an algorithm can judge them.
+- **Asset intelligence.** Checks image dimensions, dominant colors against the palette, and whitespace ratio. Finds ranked local logo candidates with evidence, and offers explicit vision-model critique grounded in the brief, audience, visual guidelines, and asset usage. Model judgments remain advisory and separate from deterministic lint scores.
 - **Repository branding.** README, CONTRIBUTING, issue templates, and release notes are first-class lint surfaces, checked like any other outward expression of the product.
 - **Project-linked social accounts.** `brandi social` opens an account workspace where provider profiles are linked to one project and treated simultaneously as sources and surfaces: content/metrics evidence plus public brand identity. Tokens remain in environment variables or the current masked TUI session; project files store only credential references.
 - **Social strategy engine.** Derives a capability → narrative → audience → format graph from the brief and renders content plans per audience segment.
@@ -70,6 +70,41 @@ brandi daemon stop
 ```
 
 ## Command reference
+
+### Logo finding and contextual vision critique
+
+```bash
+brandi assets logos --path ./my-project --format json
+brandi assets critique assets/logo.png --path ./my-project
+brandi assets critique --path ./my-project --format json
+```
+
+Logo finding scans local images, including SVGs, and ranks logo/wordmark path
+tokens, brand identity tokens, and icon/favicon fallbacks. Confidence describes
+discovery evidence, not visual quality. Basename references are usage hints and
+can be ambiguous when assets share a filename. No remote logos are downloaded.
+
+Critique defaults to the strongest raster logo candidate. Configure the selected
+vision-capable provider in `.brandi/vision.yaml` (credentials stay in the named
+environment variable):
+
+```yaml
+endpoint: https://openrouter.ai/api/v1/chat/completions
+model: your-vision-capable-model-id
+api_key_env: OPENROUTER_API_KEY
+```
+
+The endpoint uses the chat-completions image-input protocol. Each explicit
+critique sends one project-relative PNG, JPEG, GIF, or WebP plus the brief,
+guidelines, dimensions, logo candidates and reference-count hints to that
+provider. Use `dreamcred run inference-providers -- brandi assets critique ...`
+for Dreamsequence credentials. Images are limited to 8 MiB and the existing
+image dimension budget; context is limited to 64 KiB. Symlinks resolving outside
+the project and parent traversal are rejected. Render SVGs to PNG before review.
+Provider failures, refusals and incomplete responses fail the command; they do
+not produce a heuristic replacement. Critiques discuss visible strengths,
+prioritized weaknesses, audience fit, concrete revisions and uncertainty, and
+do not modify assets or change coherence scores.
 
 Every command that acts on a project accepts `--path <DIR>` for the project root (default: the current directory). `brandi brief [PATH]` and `brandi guidelines [PATH]` instead accept an optional positional target and discover the nearest `.brandi/` directory at or above that target (or the current directory). The exceptions are commands with nothing project-scoped to point at: `brandi telegram run`/`status` (configured entirely by `--config`) and the `brandi social adb wifi` subcommands (pure device operations — pairing, connecting, disconnecting, bridging — that don't touch project state).
 

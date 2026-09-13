@@ -156,6 +156,14 @@ fn run(cli: Cli) -> Result<i32> {
             fail_under_recall,
         } => commands::evaluate(&corpus, fail_under_precision, fail_under_recall, &format)?,
         Commands::Assets { command } => match command {
+            AssetsCommands::Logos { path } => {
+                commands::assets_logos(&path, &format)?;
+                0
+            }
+            AssetsCommands::Critique { image, path } => {
+                commands::assets_critique(&path, image.as_deref(), &format)?;
+                0
+            }
             AssetsCommands::Check { images, kind, path } => {
                 commands::assets_check(&path, &images, &kind)?;
                 0

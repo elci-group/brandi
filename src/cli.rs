@@ -353,6 +353,18 @@ pub enum GuidelinesCommands {
 
 #[derive(Subcommand, Debug)]
 pub enum AssetsCommands {
+    /// Find and rank local logo candidates with evidence
+    Logos {
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Critically review a raster asset using a vision model and brand context
+    Critique {
+        /// Project-relative image path; defaults to the strongest raster logo
+        image: Option<PathBuf>,
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
     /// Check image assets against the guidelines' asset spec
     Check {
         /// Image files to check
@@ -683,7 +695,7 @@ mod creative_command_tests {
         command.build();
         let mut leaves = 0;
         visit(&command, &mut leaves);
-        assert_eq!(leaves, 41);
+        assert_eq!(leaves, 43);
     }
 
     #[test]

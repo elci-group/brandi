@@ -815,6 +815,44 @@ pub fn assets_audit(path: &Path, format: &Format) -> Result<()> {
     Ok(())
 }
 
+pub fn assets_logos(path: &Path, format: &Format) -> Result<()> {
+    let logos = assets::find_logos(path)?;
+    match format {
+        Format::Human => {
+            if logos.is_empty() {
+                println!("no logo candidates found");
+            }
+            for logo in logos.iter().take(crate::output::DEFAULT_LIST_CAP) {
+                println!(
+                    "{} — {}% confidence: {}",
+                    logo.asset.path,
+                    logo.confidence,
+                    logo.evidence.join("; ")
+                );
+            }
+        }
+        Format::Json | Format::Jsonl => println!(
+            "{}",
+            serde_json::to_string(
+                &serde_json::json!({"schema_version":"brandi-logos-v1", "logos":logos})
+            )?
+        ),
+    }
+    Ok(())
+}
+
+pub fn assets_critique(path: &Path, image: Option<&Path>, format: &Format) -> Result<()> {
+    let review = assets::critique_asset(path, image)?;
+    match format {
+        Format::Human => println!(
+            "Vision critique: {} ({})\n{}",
+            review.path, review.model, review.analysis
+        ),
+        Format::Json | Format::Jsonl => println!("{}", serde_json::to_string(&review)?),
+    }
+    Ok(())
+}
+
 /// `brandi social graph`: render the narrative graph.
 pub fn social_graph(path: &Path) -> Result<()> {
     let brief = Brief::load(path)?;
