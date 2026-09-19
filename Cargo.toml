@@ -1,6 +1,6 @@
 [package]
 name = "brandi"
-version = "0.1.18"
+version = "0.1.19"
 edition = "2021"
 description = "Brand coherence intelligence layer: lint user-facing surfaces against a machine-readable brand genome"
 publish = false
@@ -24,7 +24,7 @@ notify = "6"
 form3 = { path = "../3form" }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
 libc = "0.2"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 sha2 = "0.10"
 base64 = "0.22"
 tree-sitter = "0.26.13"

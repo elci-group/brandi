@@ -36,6 +36,7 @@ As AI-generated software becomes common, the bottleneck shifts from producing co
 - **Asset intelligence.** Checks image dimensions, dominant colors against the palette, and whitespace ratio. Finds ranked local logo candidates with evidence, and offers explicit vision-model critique grounded in the brief, audience, visual guidelines, and asset usage. Model judgments remain advisory and separate from deterministic lint scores.
 - **Repository branding.** README, CONTRIBUTING, issue templates, and release notes are first-class lint surfaces, checked like any other outward expression of the product.
 - **Project-linked social accounts.** `brandi social` opens an account workspace where provider profiles are linked to one project and treated simultaneously as sources and surfaces: content/metrics evidence plus public brand identity. Tokens remain in environment variables or the current masked TUI session; project files store only credential references.
+- **TikTok workspace.** TikTok-hosted OAuth login, owned-account profile and public-video snapshots, previous-post and follower/engagement trend analysis, reviewed message and third-party comment drafts, seasonal profile plans, Android screen capture, screenshot-and-audio video rendering, and creator-reviewed inbox upload.
 - **Social strategy engine.** Derives a capability → narrative → audience → format graph from the brief and renders content plans per audience segment.
 - **Watch daemon.** Re-lints the project when surfaces change and keeps a score history, so identity drift shows up the day it is introduced.
 - **Hot-pink terminal control room.** A Bubble Tea and Lip Gloss TUI adds Tape Studio for reasoned VHS demos and Growth for promotion, metrics, Kaptaind milestones, and approvals.
@@ -366,6 +367,31 @@ brandi assets audit --format json
 ### `brandi social [--path DIR]`
 
 Open the full-screen Social account workspace. Press `c` to sign in to Mastodon, Bluesky, X, Instagram, LinkedIn, YouTube, or TikTok; `[`/`]` selects a linked account and pressing `D` twice removes its project link. The wizard accepts a masked provider-issued token for the current TUI session, or uses an already-exported credential environment variable. Secret values are placed only in the child process environment: they are never command arguments and never written to `.brandi/social-accounts.json`.
+
+#### TikTok management
+
+Register a TikTok developer app with Login Kit, Display API, and Content Posting API. Configure an HTTPS redirect URI and obtain approval for `user.info.profile`, `user.info.stats`, `video.list`, and `video.upload`. Export `TIKTOK_CLIENT_KEY` and `TIKTOK_CLIENT_SECRET` in your shell. Login opens TikTok's own page, where the account owner may choose email; Brandi never receives an email password. Pass the final redirected URL through stdin so the authorization code is absent from process arguments:
+
+```bash
+brandi social tiktok login --redirect-uri https://example.com/tiktok/callback --path ./my-project
+# Open authorization_url, sign in on TikTok, then copy the final callback URL:
+printf '%s\n' "$TIKTOK_CALLBACK_URL" | brandi social tiktok login-complete --path ./my-project
+brandi social tiktok sync --path ./my-project
+brandi social tiktok analyze --path ./my-project
+```
+
+Brandi keeps OAuth state and the session outside the project under `$XDG_STATE_HOME/brandi/tiktok/` (or `~/.local/state/brandi/tiktok/`), scoped to the project's canonical path. The session file is mode `0600` and its directory is mode `0700`. Snapshots and rendered media live in `.brandi/state/tiktok/`; add `.brandi/state/` to the target project's Git ignore rules if needed. `TIKTOK_ACCESS_TOKEN` can supply an existing token instead. Brandi refreshes an expired Login Kit session when the client key and secret remain available. Sync reads up to 100 recent public posts per run. Trend history begins with the first sync; engagement rate is sampled `(likes + comments + shares) / views`, not a TikTok account-wide metric. Run sync periodically to build follower and engagement history.
+
+```bash
+brandi social tiktok reply "How does this work?" --path ./my-project
+brandi social tiktok comment "A relevant third-party post" --path ./my-project
+brandi social tiktok profile --season winter --path ./my-project
+brandi social tiktok capture --path ./my-project
+brandi social tiktok content .brandi/state/tiktok/capture-YYYYMMDDTHHMMSS000Z.png --audio assets/music.mp3 --path ./my-project
+brandi social tiktok upload .brandi/state/tiktok/content-YYYYMMDDTHHMMSS000Z.mp4 --confirm content-YYYYMMDDTHHMMSS000Z.mp4 --path ./my-project
+```
+
+`capture` requires an authorized ADB device. `content` requires FFmpeg and renders an eight-second portrait MP4 from a project-local PNG/JPEG, with optional project-local audio, plus a brand caption draft. Review the video and caption before upload. `upload` requires the `video.upload` scope and the exact filename as confirmation; it sends an MP4 of at most 64 MiB to TikTok's inbox. The account owner completes editing and posting in TikTok. Message replies, third-party comments, and seasonal profile changes are drafts for manual application because TikTok's public developer scopes do not provide general DM/comment writing or profile editing endpoints.
 
 Each linked account has two explicit roles:
 

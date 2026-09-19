@@ -225,6 +225,11 @@ pub enum Commands {
         #[command(subcommand)]
         command: PromotionCommands,
     },
+    /// Plan digital signage (out-of-home) campaigns with quoted budgets
+    Signage {
+        #[command(subcommand)]
+        command: SignageCommands,
+    },
     /// Run the Telegram hub/fleet supervisor
     Telegram {
         #[command(subcommand)]
@@ -318,6 +323,31 @@ pub enum PromotionCommands {
 }
 
 #[derive(Subcommand, Debug)]
+pub enum SignageCommands {
+    /// Build a priced signage plan from live or estimated per-play quotes
+    Plan {
+        /// Project root
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+        /// DOOH buying strategy; only caasie is currently supported
+        #[arg(long, value_enum, default_value_t = crate::signage::SignageStrategy::Caasie)]
+        strategy: crate::signage::SignageStrategy,
+        /// Hard budget ceiling in GBP, overriding the configured value
+        #[arg(long)]
+        max_budget_gbp: Option<f64>,
+        /// Price the plan from configured estimates without network access
+        #[arg(long)]
+        preflight: bool,
+    },
+    /// Validate the signage configuration and report credential state
+    Validate {
+        /// Project root
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+}
+
+#[derive(Subcommand, Debug)]
 pub enum TelegramCommands {
     /// Run the hub or fleet supervisor in the foreground
     Run {
@@ -395,6 +425,11 @@ pub enum AssetsCommands {
 
 #[derive(Subcommand, Debug)]
 pub enum SocialCommands {
+    /// TikTok Login Kit, owned-account analytics, and reviewed brand drafts
+    Tiktok {
+        #[command(subcommand)]
+        command: TiktokCommands,
+    },
     /// Render the narrative graph (capabilities → audiences → formats)
     Graph {
         /// Project root
@@ -419,6 +454,74 @@ pub enum SocialCommands {
     Adb {
         #[command(subcommand)]
         command: AdbSocialCommands,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum TiktokCommands {
+    /// Start TikTok-hosted login; choose email on TikTok's login page
+    Login {
+        #[arg(long)]
+        redirect_uri: String,
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Finish login using the redirected URL read from stdin
+    LoginComplete {
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Save a profile and recent-public-post snapshot
+    Sync {
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Analyze previous posts, follower history, and engagement history
+    Analyze {
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Draft a response to an incoming message for human review
+    Reply {
+        message: String,
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Draft a brand-identified comment for a third-party post
+    Comment {
+        post_context: String,
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Draft profile customisation, optionally for a season
+    Profile {
+        #[arg(long)]
+        season: Option<String>,
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Capture the connected Android device screen as a PNG
+    Capture {
+        #[arg(long)]
+        device: Option<String>,
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Generate a portrait MP4 from a screenshot and optional audio
+    Content {
+        screenshot: PathBuf,
+        #[arg(long)]
+        audio: Option<PathBuf>,
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Send an approved MP4 to TikTok's inbox for final creator review
+    Upload {
+        video: PathBuf,
+        #[arg(long)]
+        confirm: String,
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
     },
 }
 
@@ -695,7 +798,7 @@ mod creative_command_tests {
         command.build();
         let mut leaves = 0;
         visit(&command, &mut leaves);
-        assert_eq!(leaves, 43);
+        assert_eq!(leaves, 55);
     }
 
     #[test]
@@ -708,6 +811,46 @@ mod creative_command_tests {
             }
             other => panic!("unexpected command: {other:?}"),
         }
+    }
+
+    #[test]
+    fn signage_plan_defaults_to_caasie_with_preflight_and_budget_flags() {
+        let cli = Cli::try_parse_from([
+            "brandi",
+            "signage",
+            "plan",
+            "--path",
+            "/project",
+            "--max-budget-gbp",
+            "250",
+            "--preflight",
+        ])
+        .unwrap();
+        match cli.command {
+            Commands::Signage {
+                command:
+                    SignageCommands::Plan {
+                        path,
+                        strategy,
+                        max_budget_gbp,
+                        preflight,
+                    },
+            } => {
+                assert_eq!(path, PathBuf::from("/project"));
+                assert_eq!(strategy, crate::signage::SignageStrategy::Caasie);
+                assert_eq!(max_budget_gbp, Some(250.0));
+                assert!(preflight);
+            }
+            other => panic!("unexpected command: {other:?}"),
+        }
+
+        let validate = Cli::try_parse_from(["brandi", "signage", "validate"]).unwrap();
+        assert!(matches!(
+            validate.command,
+            Commands::Signage {
+                command: SignageCommands::Validate { .. }
+            }
+        ));
     }
 }
 

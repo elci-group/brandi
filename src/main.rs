@@ -2,8 +2,8 @@
 
 use brandi::cli::{
     AdbSocialCommands, AdbWifiCommands, AssetsCommands, BriefCommands, Cli, Commands,
-    DaemonCommands, GuidelinesCommands, PromotionCommands, SocialAccountCommands, SocialCommands,
-    TapeCommands, TelegramCommands,
+    DaemonCommands, GuidelinesCommands, PromotionCommands, SignageCommands, SocialAccountCommands,
+    SocialCommands, TapeCommands, TelegramCommands, TiktokCommands,
 };
 use brandi::commands;
 use brandi::error::Result;
@@ -178,6 +178,45 @@ fn run(cli: Cli) -> Result<i32> {
             }
         },
         Commands::Social { command, path } => match command {
+            Some(SocialCommands::Tiktok { command }) => {
+                use std::io::Read;
+                let result = match command {
+                    TiktokCommands::Login { redirect_uri, path } => {
+                        brandi::tiktok::login_url(&path, &redirect_uri)?
+                    }
+                    TiktokCommands::LoginComplete { path } => {
+                        let mut callback = String::new();
+                        std::io::stdin().read_to_string(&mut callback)?;
+                        brandi::tiktok::login_complete(&path, callback.trim())?
+                    }
+                    TiktokCommands::Sync { path } => brandi::tiktok::sync(&path)?,
+                    TiktokCommands::Analyze { path } => brandi::tiktok::analyze(&path)?,
+                    TiktokCommands::Reply { message, path } => {
+                        brandi::tiktok::draft_reply(&path, &message, false)?
+                    }
+                    TiktokCommands::Comment { post_context, path } => {
+                        brandi::tiktok::draft_reply(&path, &post_context, true)?
+                    }
+                    TiktokCommands::Profile { season, path } => {
+                        brandi::tiktok::profile_plan(&path, season.as_deref())?
+                    }
+                    TiktokCommands::Capture { device, path } => {
+                        brandi::tiktok::capture_screen(&path, device.as_deref())?
+                    }
+                    TiktokCommands::Content {
+                        screenshot,
+                        audio,
+                        path,
+                    } => brandi::tiktok::content(&path, &screenshot, audio.as_deref())?,
+                    TiktokCommands::Upload {
+                        video,
+                        confirm,
+                        path,
+                    } => brandi::tiktok::upload(&path, &video, &confirm)?,
+                };
+                brandi::output::line(serde_json::to_string_pretty(&result)?)?;
+                0
+            }
             None => {
                 commands::social_tui(&path)?;
                 0
@@ -382,6 +421,21 @@ fn run(cli: Cli) -> Result<i32> {
             }
             TelegramCommands::Status { config } => {
                 commands::telegram_status(config.as_deref())?;
+                0
+            }
+        },
+        Commands::Signage { command } => match command {
+            SignageCommands::Plan {
+                path,
+                strategy,
+                max_budget_gbp,
+                preflight,
+            } => {
+                commands::signage_plan(&path, strategy, max_budget_gbp, preflight, &format)?;
+                0
+            }
+            SignageCommands::Validate { path } => {
+                commands::signage_validate(&path, &format)?;
                 0
             }
         },

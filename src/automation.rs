@@ -336,7 +336,7 @@ pub fn collect_metrics(root: &Path, config: &PromotionConfig) -> Result<MetricSn
 /// Escape a value for embedding in a curl `-K` config-file directive.
 /// Curl's config parser treats a quoted value like a double-quoted shell
 /// string: `\`, `"`, and a handful of control characters must be escaped.
-fn escape_curl_config_value(value: &str) -> String {
+pub(crate) fn escape_curl_config_value(value: &str) -> String {
     let mut out = String::with_capacity(value.len() + 2);
     for ch in value.chars() {
         match ch {
@@ -352,7 +352,7 @@ fn escape_curl_config_value(value: &str) -> String {
     out
 }
 
-fn curl_config_line(option: &str, value: &str) -> String {
+pub(crate) fn curl_config_line(option: &str, value: &str) -> String {
     format!("{option} = \"{}\"\n", escape_curl_config_value(value))
 }
 
@@ -361,7 +361,10 @@ fn curl_config_line(option: &str, value: &str) -> String {
 /// instead of argv, so tokens never appear in `ps` or
 /// `/proc/<pid>/cmdline` for the life of the child process. `flags` must
 /// carry only non-secret argv switches.
-fn curl_with_config(flags: &[&str], config: &str) -> Option<crate::process::BoundedOutput> {
+pub(crate) fn curl_with_config(
+    flags: &[&str],
+    config: &str,
+) -> Option<crate::process::BoundedOutput> {
     let mut last = None;
     for attempt in 0..3u64 {
         let output = run_bounded_with_input(

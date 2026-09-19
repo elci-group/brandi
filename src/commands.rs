@@ -1271,6 +1271,93 @@ pub fn promotion_plan(path: &Path, format: &Format) -> Result<()> {
     Ok(())
 }
 
+pub fn signage_plan(
+    path: &Path,
+    strategy: crate::signage::SignageStrategy,
+    max_budget_gbp: Option<f64>,
+    preflight: bool,
+    format: &Format,
+) -> Result<()> {
+    let config = crate::signage::SignageConfig::load(path)?;
+    let plan = crate::signage::build_plan(&config, strategy, max_budget_gbp, preflight)?;
+    match format {
+        Format::Json | Format::Jsonl => println!("{}", serde_json::to_string_pretty(&plan)?),
+        Format::Human => {
+            println!(
+                "Signage plan ({}, {} market, {} {})\nObjective: {}\nDates: {} → {} ({} day{})\nQuotes: {} · {}",
+                plan.strategy,
+                plan.market,
+                plan.total_plays,
+                if plan.total_plays == 1 { "play" } else { "plays" },
+                if plan.objective.is_empty() {
+                    "(none)"
+                } else {
+                    &plan.objective
+                },
+                plan.start_date,
+                plan.end_date,
+                plan.days,
+                if plan.days == 1 { "" } else { "s" },
+                plan.quote_source,
+                plan.quoted_at,
+            );
+            for board in &plan.boards {
+                println!(
+                    "  {:<16} {:<14} {:<12} {:>6} plays × £{:<8.4} = £{:.2}",
+                    board.board.board_id,
+                    board.board.venue,
+                    board.board.city,
+                    board.plays,
+                    board.price_per_play_gbp,
+                    board.subtotal_gbp,
+                );
+            }
+            println!("  Total: £{:.2}", plan.total_gbp);
+            if let Some(ceiling) = plan.max_budget_gbp {
+                println!("  Ceiling: £{ceiling:.2}");
+            }
+            for warning in &plan.warnings {
+                println!("  warning: {warning}");
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn signage_validate(path: &Path, format: &Format) -> Result<()> {
+    let report = crate::signage::validate(path)?;
+    match format {
+        Format::Json | Format::Jsonl => println!("{}", serde_json::to_string_pretty(&report)?),
+        Format::Human => {
+            if report.valid {
+                println!(
+                    "signage configuration valid: {} board{} · {} market · credential {} ({})",
+                    report.board_count,
+                    if report.board_count == 1 { "" } else { "s" },
+                    report.market,
+                    report.credential_env,
+                    if report.credential_present {
+                        "present"
+                    } else {
+                        "missing"
+                    },
+                );
+            } else {
+                println!("signage configuration invalid:");
+                for error in &report.errors {
+                    println!("  - {error}");
+                }
+            }
+        }
+    }
+    if !report.valid {
+        return Err(BrandiError::Invalid(
+            "signage configuration is invalid".into(),
+        ));
+    }
+    Ok(())
+}
+
 pub fn promotion_stats(path: &Path, format: &Format) -> Result<()> {
     let config = automation::PromotionConfig::load(path)?;
     let stats = automation::collect_metrics(path, &config)?;
