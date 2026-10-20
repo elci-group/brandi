@@ -112,6 +112,9 @@ pub struct PromotionPlan {
     pub stop_conditions: Vec<String>,
     pub evidence: Vec<String>,
     pub provider: String,
+    /// Principle ids from the marketing knowledge graph that constrain this plan.
+    #[serde(default)]
+    pub marketing_principles: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -541,9 +544,11 @@ pub fn build_plan(root: &Path) -> Result<PromotionPlan> {
         stop_conditions: vec![
             "Pause when claims lack evidence".into(),
             "Revise when two consecutive snapshots miss the target metric".into(),
+            "Pause when a line performs honesty the evidence does not support.".into(),
         ],
         evidence: metrics.evidence.clone(),
         provider: "deterministic-fallback".into(),
+        marketing_principles: crate::marketing_knowledge::marketing_principle_ids(),
     };
     append_jsonl(&state_path(root, "promotion-plans.jsonl"), &plan)?;
     queue_padagonia(root, &config, "PromotionPlan", &plan, &plan.evidence)?;

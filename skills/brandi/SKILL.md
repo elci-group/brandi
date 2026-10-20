@@ -61,7 +61,7 @@ Read [references/commands.md](references/commands.md) when selecting a less comm
 
 - Use `assets list` before checking discovered images.
 - Use `assets check ... --kind auto` unless the intended format is known. Treat typography, composition, and message clarity as manual-review items.
-- Use `social graph` to inspect capability-to-audience mappings and `social plan` to derive content ideas. These commands plan; they do not publish.
+- Use `social graph` to inspect capability-to-audience mappings and `social plan` to derive content ideas. These commands plan; they do not publish. `social knowledge` renders the cited marketing graph that those plans check against.
 
 ## Guard stateful and external actions
 
@@ -75,6 +75,7 @@ Treat these as distinct trust boundaries:
 - `social adb stage` opens an approved revision in an Android composer.
 - `social adb publish` can tap the configured publish control and requires exact draft-ID confirmation.
 - `tape render` executes VHS after validation; `tape generate --output` writes a file.
+- `social knowledge --save` writes `.brandi/state/marketing-knowledge.padagonia`. Without `--save` the command is read-only.
 
 Perform these only when they are explicitly within the user's request. Inspect status, configuration, queues, or generated plans first. Never expose tokens, API keys, Telegram IDs, pairing codes, or secret-bearing configuration. Never describe approval or staging as publication.
 

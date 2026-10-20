@@ -229,6 +229,10 @@ fn run(cli: Cli) -> Result<i32> {
                 commands::social_plan(&path, segment.as_deref())?;
                 0
             }
+            Some(SocialCommands::Knowledge { path, save }) => {
+                commands::social_knowledge(&path, save)?;
+                0
+            }
             Some(SocialCommands::Accounts { command }) => match command {
                 SocialAccountCommands::List { path } => {
                     commands::social_accounts_list(&path, &format)?;

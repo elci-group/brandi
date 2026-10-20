@@ -17,6 +17,7 @@ pub mod direct;
 pub mod error;
 pub mod evaluation;
 pub mod guidelines;
+pub mod marketing_knowledge;
 pub mod output;
 pub mod process;
 pub mod propose;

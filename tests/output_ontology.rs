@@ -100,7 +100,7 @@ fn padagonia_ontology_covers_the_live_cli() {
     let mut leaves = Vec::new();
     collect_leaves(&clap, &[], &[], &mut leaves);
     leaves.sort_by(|a, b| a.path.cmp(&b.path));
-    assert_eq!(leaves.len(), 55, "every executable leaf must be modeled");
+    assert_eq!(leaves.len(), 56, "every executable leaf must be modeled");
     assert_eq!(
         leaves
             .iter()

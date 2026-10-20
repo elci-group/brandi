@@ -4,3 +4,11 @@
 /tui/brandi-tui-new
 /.brandi/state/
 /supply-chain/
+.azusa/
+.kaptaind/
+.lwoodz/
+.uni/
+.traci/
+.orb
+*.log
+.env

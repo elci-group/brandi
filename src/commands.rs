@@ -881,9 +881,35 @@ pub fn social_plan(path: &Path, segment: Option<&str>) -> Result<()> {
             serde_json::to_string_pretty(&serde_json::json!({
                 "schema_version": "brandi-social-plan-v1",
                 "segment": segment,
-                "plan": plan
+                "plan": plan,
+                "reasoning": crate::marketing_knowledge::reasoning_value(),
             }))?
         ),
+    }
+    Ok(())
+}
+
+/// `brandi social knowledge [--save]`: render or store the marketing graph.
+pub fn social_knowledge(path: &Path, save: bool) -> Result<()> {
+    let saved = if save {
+        Some(crate::marketing_knowledge::save_knowledge(path)?)
+    } else {
+        None
+    };
+    match crate::output::context().format {
+        Format::Human => {
+            println!("{}", crate::marketing_knowledge::render_knowledge());
+            if let Some(path) = saved {
+                println!("\nsaved: {}", path.display());
+            }
+        }
+        Format::Json | Format::Jsonl => {
+            let mut value = crate::marketing_knowledge::knowledge_value();
+            if let Some(path) = saved {
+                value["saved_path"] = serde_json::Value::String(path.display().to_string());
+            }
+            println!("{}", serde_json::to_string_pretty(&value)?);
+        }
     }
     Ok(())
 }

@@ -2,7 +2,8 @@
 //!
 //! Turns `audience.yaml` (segments + narratives) into two human-readable
 //! views: `render_graph` draws the capability → audience → format tree,
-//! `render_plan` emits a per-format content checklist.
+//! `render_plan` emits a per-format content checklist constrained by the
+//! cited marketing knowledge graph.
 
 use crate::brief::{Brief, Narrative};
 use crate::error::{BrandiError, Result};
@@ -410,6 +411,17 @@ pub fn render_plan(brief: &Brief, segment: Option<&str>) -> String {
         }
     }
 
+    out.push("Strategy frame".to_string());
+    for question in crate::marketing_knowledge::strategy_questions() {
+        out.push(format!("- {question}"));
+    }
+    for constraint in crate::marketing_knowledge::planning_constraints() {
+        if constraint.scope == "frame" {
+            out.push(constraint.check.to_string());
+        }
+    }
+    out.push(String::new());
+
     if narratives.is_empty() {
         out.push("no narratives defined in audience.yaml".to_string());
     }
@@ -425,6 +437,11 @@ pub fn render_plan(brief: &Brief, segment: Option<&str>) -> String {
         ));
         for format in &narrative.formats {
             out.push(format!("    [ ] {format}"));
+            for constraint in crate::marketing_knowledge::planning_constraints() {
+                if constraint.scope == "item" {
+                    out.push(format!("        {}", constraint.check));
+                }
+            }
             items += 1;
         }
     }
@@ -539,6 +556,8 @@ narratives:
             plan.contains("1 narratives, 4 content items"),
             "got:\n{plan}"
         );
+        assert!(plan.contains("[idea-selection]"), "got:\n{plan}");
+        assert!(plan.contains("[brands-are-interruptions]"), "got:\n{plan}");
     }
 
     #[test]

@@ -219,6 +219,10 @@ fn fallback_plan(request: &TapeRequest) -> TapePlan {
                 "Build the channel plan",
                 TapeCommand::brandi(&["social", "plan"]),
             ),
+            (
+                "Load the marketing ontology",
+                TapeCommand::brandi(&["social", "knowledge"]),
+            ),
         ],
         _ => vec![
             ("Inspect the brand system", TapeCommand::brandi(&["scan"])),
@@ -234,11 +238,28 @@ fn fallback_plan(request: &TapeRequest) -> TapePlan {
         goal: request.goal.clone(),
         scenes: commands
             .into_iter()
-            .map(|(title, command)| TapeScene {
-                title: title.into(),
-                command,
-                pause_ms: 1800,
-                rationale: "Show one verifiable step in the product story".into(),
+            .map(|(title, command)| {
+                let rationale = if request.preset == "social-plan" {
+                    match title {
+                        "Map the narrative" => {
+                            "Name the audience and the goal before the items [four-question-strategy]"
+                        }
+                        "Build the channel plan" => {
+                            "Choose the idea before the format [idea-selection]"
+                        }
+                        _ => {
+                            "Read the cited graph that constrains the plan [four-question-strategy]"
+                        }
+                    }
+                } else {
+                    "Show one verifiable step in the product story"
+                };
+                TapeScene {
+                    title: title.into(),
+                    command,
+                    pause_ms: 1800,
+                    rationale: rationale.into(),
+                }
             })
             .collect(),
     }
@@ -277,7 +298,8 @@ fn model_plan(
         },
         "constraints": [
             "2 to 6 scenes", "read-only commands only", "program must equal brandi",
-            "args must match a documented allowlisted command", "pause_ms between 500 and 5000"
+            "args must match a documented allowlisted command: scan, lint, propose --budget N, social graph, social plan, social knowledge",
+            "pause_ms between 500 and 5000"
         ]
     });
     let schema = serde_json::json!({
@@ -584,7 +606,10 @@ fn validate_command(command: &TapeCommand) -> std::result::Result<(), String> {
 
     let args = command.args.iter().map(String::as_str).collect::<Vec<_>>();
     let allowed = matches!(args.as_slice(), ["scan"] | ["lint"])
-        || matches!(args.as_slice(), ["social", "graph"] | ["social", "plan"])
+        || matches!(
+            args.as_slice(),
+            ["social", "graph"] | ["social", "plan"] | ["social", "knowledge"]
+        )
         || matches!(args.as_slice(), ["propose", "--budget", value]
             if value.parse::<u32>().is_ok_and(|budget| (1..=20).contains(&budget)));
     if allowed {
@@ -1055,6 +1080,7 @@ mod tests {
             "brandi propose --budget 5",
             "brandi social graph",
             "brandi social plan",
+            "brandi social knowledge",
         ] {
             assert!(
                 parse_normalized_command(command).is_ok(),

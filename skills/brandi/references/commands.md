@@ -22,7 +22,8 @@ foreground daemon and Telegram supervisor because their output is unbounded.
 | `brandi assets list --path <DIR>` | List discovered image assets. |
 | `brandi assets check <IMAGES...> --kind auto\|social-card\|thumbnail\|icon --path <DIR>` | Analyze dimensions, palette proximity, and whitespace. |
 | `brandi social graph --path <DIR>` | Render capability, narrative, audience, and format relationships. |
-| `brandi social plan --path <DIR> [--segment NAME]` | Derive a content plan from the brief. |
+| `brandi social plan --path <DIR> [--segment NAME]` | Derive a content plan from the brief. JSON includes deterministic marketing reasoning. |
+| `brandi social knowledge [--path <DIR>]` | Render the cited Padagonia marketing knowledge graph. Read-only unless `--save` is set. |
 | `brandi social --path <DIR>` | Open the project-linked social account TUI. Tokens are masked and session/environment-only; account metadata is treated as both source evidence and public brand surfaces. |
 | `brandi social accounts list\|connect\|disconnect --path <DIR>` | Manage the machine-readable account registry. Connect stores only a credential environment-variable reference; disconnect requires an exact account-id confirmation. |
 | `brandi daemon status --path <DIR>` | Inspect watch-daemon state. |
@@ -36,6 +37,7 @@ foreground daemon and Telegram supervisor because their output is unbounded.
 
 | Command | Effect |
 | --- | --- |
+| `brandi social knowledge --save --path <DIR>` | Writes `.brandi/state/marketing-knowledge.padagonia`. Requires an existing `.brandi/` directory. |
 | `brandi init --path <DIR>` | Creates missing `.brandi/` brief and guidelines files; never overwrites existing ones. |
 | `brandi direct [--path <DIR>]` | Generates missing social-card/thumbnail SVGs with Vasilis and a validated VHS demo tape when requested by the guidelines. Existing asset classes are preserved. |
 | `brandi reshoot [--path <DIR>]` | Rewrites discovered image palettes, stylesheet colour tokens, and non-code documentation surfaces against the brief and guidelines. |

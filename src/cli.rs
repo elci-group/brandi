@@ -445,6 +445,15 @@ pub enum SocialCommands {
         #[arg(long, default_value = ".")]
         path: PathBuf,
     },
+    /// Render the cited Padagonia marketing knowledge graph
+    Knowledge {
+        /// Project root used when `--save` writes the graph
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+        /// Write the graph to .brandi/state/marketing-knowledge.padagonia
+        #[arg(long)]
+        save: bool,
+    },
     /// List, connect, and disconnect project-linked social accounts
     Accounts {
         #[command(subcommand)]
@@ -798,7 +807,7 @@ mod creative_command_tests {
         command.build();
         let mut leaves = 0;
         visit(&command, &mut leaves);
-        assert_eq!(leaves, 55);
+        assert_eq!(leaves, 56);
     }
 
     #[test]

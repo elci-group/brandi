@@ -37,7 +37,7 @@ As AI-generated software becomes common, the bottleneck shifts from producing co
 - **Repository branding.** README, CONTRIBUTING, issue templates, and release notes are first-class lint surfaces, checked like any other outward expression of the product.
 - **Project-linked social accounts.** `brandi social` opens an account workspace where provider profiles are linked to one project and treated simultaneously as sources and surfaces: content/metrics evidence plus public brand identity. Tokens remain in environment variables or the current masked TUI session; project files store only credential references.
 - **TikTok workspace.** TikTok-hosted OAuth login, owned-account profile and public-video snapshots, previous-post and follower/engagement trend analysis, reviewed message and third-party comment drafts, seasonal profile plans, Android screen capture, screenshot-and-audio video rendering, and creator-reviewed inbox upload.
-- **Social strategy engine.** Derives a capability → narrative → audience → format graph from the brief and renders content plans per audience segment.
+- **Social strategy engine.** Derives a capability → narrative → audience → format graph from the brief and renders content plans per audience segment. Each plan carries deterministic checks from a cited Padagonia marketing graph (`brandi social knowledge`).
 - **Watch daemon.** Re-lints the project when surfaces change and keeps a score history, so identity drift shows up the day it is introduced.
 - **Hot-pink terminal control room.** A Bubble Tea and Lip Gloss TUI adds Tape Studio for reasoned VHS demos and Growth for promotion, metrics, Kaptaind milestones, and approvals.
 - **Safe VHS intelligence.** Structured model planning falls back deterministically, compiles to `.tape`, blocks mutating shell patterns, runs native `vhs validate`, confines saves to `demos/`, and renders only on an explicit command.
@@ -427,6 +427,19 @@ brandi social plan
 brandi social plan --segment platform_engineers
 ```
 
+The plan names the goal, audience, resources, and success measure, then checks each format against the marketing graph: idea before format, a five-to-seven word concept, a highlight hook, a stance, the full idea on that surface, tried-and-true versus experiment, both social-failure modes, the interruption assumption, a save-or-share takeaway, honesty the evidence supports, and a split between strategy agreement and creative execution.
+
+### `brandi social knowledge [--save]`
+
+Render the Padagonia marketing knowledge graph: shared knowledge, source references, and the planning checks above. The graph is a cited public sample of Jack Appleby's marketing writing and posts. It is not a complete archive of the account.
+
+```bash
+brandi social knowledge
+brandi social knowledge --save --path ./my-project
+```
+
+`--save` writes `.brandi/state/marketing-knowledge.padagonia` and requires an existing `.brandi/` directory. Without `--save` the command only prints the graph.
+
 ### `brandi daemon run`
 
 Run the watch daemon in the foreground. Useful under a process supervisor; stop with Ctrl-C.
@@ -472,7 +485,7 @@ brandi tape render demos/release.tape
 brandi tape render demos/release.tape --confirm render-<sha256-token>
 ```
 
-Configure an OpenAI-compatible Responses endpoint in `.brandi/reasoning.yaml`. The API key is read from `api_key_env`; if configuration, credentials, or the provider are unavailable, generation uses the deterministic preset compiler. Tape scenes are typed executable/argument records. The policy accepts only `brandi scan`, `brandi lint`, bounded `brandi propose --budget`, and the two read-only social planning commands. Rendering fails closed without Bubblewrap, runs with no network or host credentials and a read-only host, writes first to a disposable directory, then promotes one bounded regular output file. Every attempt records the plan hash, OS-credential-bound approver, sandbox policy, VHS digest, timestamps, commands, and result in `.brandi/state/tape-executions.jsonl`.
+Configure an OpenAI-compatible Responses endpoint in `.brandi/reasoning.yaml`. The API key is read from `api_key_env`; if configuration, credentials, or the provider are unavailable, generation uses the deterministic preset compiler. Tape scenes are typed executable/argument records. The policy accepts only `brandi scan`, `brandi lint`, bounded `brandi propose --budget`, `brandi social graph`, `brandi social plan`, and `brandi social knowledge`. Rendering fails closed without Bubblewrap, runs with no network or host credentials and a read-only host, writes first to a disposable directory, then promotes one bounded regular output file. Every attempt records the plan hash, OS-credential-bound approver, sandbox policy, VHS digest, timestamps, commands, and result in `.brandi/state/tape-executions.jsonl`.
 
 ### Growth, Padagonia, and monitoring
 
@@ -776,6 +789,7 @@ Repository layout:
 - `src/report.rs` — report assembly and human/JSON rendering
 - `src/assets.rs` — image asset checks
 - `src/social.rs` — narrative graph and content planning
+- `src/marketing_knowledge.rs` — cited marketing ontology and deterministic plan checks
 - `src/daemon.rs` — the watch daemon
 - `tui/` — the Charm (bubbletea/lipgloss) terminal UI, a Go module wrapping the `brandi` binary
 
