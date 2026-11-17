@@ -239,7 +239,7 @@ version = "0.1.5"
 dependencies = [
  "csv",
  "dirs",
- "form3 0.1.1 (git+https://github.com/elci-group/form3?rev=0a3d331a771a1eb6266839c701ee213a44e5f514)",
+ "form3 0.1.1",
  "ignore",
  "mesut",
  "once_cell",
@@ -260,7 +260,7 @@ dependencies = [
  "base64 0.22.1",
  "chrono",
  "clap",
- "form3 0.1.1",
+ "form3 0.1.2",
  "image",
  "libc",
  "notify",
@@ -789,11 +789,11 @@ checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 [[package]]
 name = "form3"
 version = "0.1.1"
+source = "git+https://github.com/elci-group/3form?rev=0a3d331a771a1eb6266839c701ee213a44e5f514#0a3d331a771a1eb6266839c701ee213a44e5f514"
 
 [[package]]
 name = "form3"
-version = "0.1.1"
-source = "git+https://github.com/elci-group/form3?rev=0a3d331a771a1eb6266839c701ee213a44e5f514#0a3d331a771a1eb6266839c701ee213a44e5f514"
+version = "0.1.2"
 
 [[package]]
 name = "form_urlencoded"
